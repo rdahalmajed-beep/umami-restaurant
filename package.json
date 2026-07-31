@@ -1,0 +1,32 @@
+{
+  "name": "restaurant-platform",
+  "private": false,
+  "packageManager": "pnpm@11.5.3",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "pnpm -r dev",
+    "dev:fast": "pnpm --parallel --filter @dtc/backend --filter @dtc/storefront run dev",
+    "dev:ui": "pnpm --filter @dtc/storefront run dev",
+    "dev:api": "pnpm --filter @dtc/backend run dev",
+    "build": "pnpm -r build",
+    "start": "turbo start",
+    "lint": "turbo lint",
+    "test": "turbo test",
+    "backend:seed": "turbo seed --filter=@dtc/backend",
+    "backend:dev": "pnpm --filter @dtc/backend run dev",
+    "storefront:dev": "pnpm --filter @dtc/storefront run dev",
+    "smoke:phase4": "powershell -NoProfile -File ./scripts/phase4-e2e-smoke.ps1",
+    "smoke:phase5": "powershell -NoProfile -File ./scripts/phase5-modifiers-smoke.ps1",
+    "smoke:phase6": "powershell -NoProfile -File ./scripts/phase6-status-smoke.ps1",
+    "smoke:phase7": "powershell -NoProfile -File ./scripts/phase7-ui-smoke.ps1"
+  },
+  "devDependencies": {
+    "@medusajs/eslint-plugin": "2.16.0",
+    "eslint": "^9.39.4",
+    "jiti": "^2.7.0",
+    "prettier": "^3.2.5",
+    "turbo": "^2.0.14"
+  }
+}

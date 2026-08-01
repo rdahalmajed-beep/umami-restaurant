@@ -6,6 +6,11 @@ import { z } from "zod"
 const LinkSchema = z.object({
   modifier_group_id: z.string().min(1),
   sort_order: z.number().int().optional(),
+  is_required_override: z.boolean().nullable().optional(),
+  min_selections_override: z.number().int().nullable().optional(),
+  max_selections_override: z.number().int().nullable().optional(),
+  variant_ids: z.array(z.string()).nullable().optional(),
+  branch_ids: z.array(z.string()).nullable().optional(),
 })
 
 export async function GET(req: MedusaRequest, res: MedusaResponse) {
@@ -14,7 +19,11 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   const groups = await restaurant.listProductModifierGroupsDetailed(
     req.params.id
   )
-  res.json({ product_id: req.params.id, modifier_groups: groups })
+  const links = await restaurant.listProductModifierGroups(
+    { product_id: req.params.id },
+    { order: { sort_order: "ASC" } }
+  )
+  res.json({ product_id: req.params.id, modifier_groups: groups, links })
 }
 
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
@@ -24,11 +33,34 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
 
   await restaurant.retrieveModifierGroup(body.modifier_group_id)
 
-  const link = await restaurant.linkModifierGroupToProduct(
+  let link = await restaurant.linkModifierGroupToProduct(
     req.params.id,
     body.modifier_group_id,
     body.sort_order ?? 0
   )
+
+  const patch: Record<string, unknown> = {}
+  if (body.is_required_override !== undefined) {
+    patch.is_required_override = body.is_required_override
+  }
+  if (body.min_selections_override !== undefined) {
+    patch.min_selections_override = body.min_selections_override
+  }
+  if (body.max_selections_override !== undefined) {
+    patch.max_selections_override = body.max_selections_override
+  }
+  if (body.variant_ids !== undefined) {
+    patch.variant_ids_json = body.variant_ids
+  }
+  if (body.branch_ids !== undefined) {
+    patch.branch_ids_json = body.branch_ids
+  }
+  if (Object.keys(patch).length) {
+    link = await restaurant.updateProductModifierGroups({
+      id: (link as { id: string }).id,
+      ...patch,
+    })
+  }
 
   const groups = await restaurant.listProductModifierGroupsDetailed(
     req.params.id

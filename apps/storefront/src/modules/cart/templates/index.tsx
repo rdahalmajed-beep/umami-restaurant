@@ -5,21 +5,27 @@ import SignInPrompt from "../components/sign-in-prompt"
 import Divider from "@modules/common/components/divider"
 import OrderTypeSelector from "../components/order-type-selector"
 import { HttpTypes } from "@medusajs/types"
-import type { StoreBranch } from "types/restaurant"
+import type { StoreBranch, StoreFulfillmentPolicy } from "types/restaurant"
 
 const CartTemplate = ({
   cart,
   customer,
   branches,
+  policy,
 }: {
   cart: HttpTypes.StoreCart | null
   customer: HttpTypes.StoreCustomer | null
   branches: StoreBranch[]
+  policy?: StoreFulfillmentPolicy | null
 }) => {
   const restaurant = (cart?.metadata?.restaurant || {}) as {
     order_type?: "delivery" | "pickup"
     branch_id?: string
   }
+
+  const subtotal = Number(cart?.subtotal || cart?.item_subtotal || 0)
+  const minOrder = Number(policy?.min_order_amount || 0)
+  const belowMin = minOrder > 0 && subtotal < minOrder
 
   return (
     <div className="py-12">
@@ -38,25 +44,36 @@ const CartTemplate = ({
                 initialOrderType={restaurant.order_type}
                 initialBranchId={restaurant.branch_id}
               />
+              {policy ? (
+                <p
+                  className="text-sm text-umami-ink/70 px-1"
+                  data-testid="cart-policy-hint"
+                >
+                  {policy.is_paused
+                    ? "This fulfillment type is paused for the selected branch."
+                    : minOrder > 0
+                      ? `Minimum order: ${minOrder} · ETA ~${policy.estimated_minutes} min`
+                      : `ETA ~${policy.estimated_minutes} min`}
+                  {belowMin
+                    ? ` — add ${(minOrder - subtotal).toFixed(3)} more to checkout.`
+                    : ""}
+                </p>
+              ) : null}
               <Divider />
               <ItemsTemplate cart={cart} />
             </div>
             <div className="relative">
               <div className="flex flex-col gap-y-8 sticky top-12">
                 {cart && cart.region && (
-                  <>
-                    <div className="bg-white py-6">
-                      <Summary cart={cart} />
-                    </div>
-                  </>
+                  <div className="bg-white py-6">
+                    <Summary cart={cart} />
+                  </div>
                 )}
               </div>
             </div>
           </div>
         ) : (
-          <div>
-            <EmptyCartMessage />
-          </div>
+          <EmptyCartMessage />
         )}
       </div>
     </div>

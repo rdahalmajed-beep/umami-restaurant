@@ -257,6 +257,26 @@ export default async function seedRestaurantCommerce({
     created.push(`updated store → ${STORE_NAME} (BHD)`)
   }
 
+  // Locales for storefront language switcher + catalog translations
+  try {
+    await updateStoresWorkflow(container).run({
+      input: {
+        selector: { id: storeId },
+        update: {
+          supported_locales: [{ locale_code: "ar" }, { locale_code: "en" }],
+        } as {
+          supported_locales: { locale_code: string }[]
+        },
+      },
+    })
+    created.push("store locales ar + en")
+  } catch (err) {
+    console.warn(
+      "[seed] Could not set supported_locales (enable MEDUSA_FF_TRANSLATION and add via Admin → Settings → Store):",
+      err instanceof Error ? err.message : err
+    )
+  }
+
   // --- Region: Bahrain ---
   let region = await findOne<{ id: string; name: string; currency_code: string }>(
     query,
@@ -459,7 +479,19 @@ export default async function seedRestaurantCommerce({
     (existingShippingOptions ?? []).map((o: { name: string }) => o.name)
   )
 
-  const shippingOptionsToCreate = []
+  const shippingOptionsToCreate: {
+    name: string
+    price_type: "flat"
+    provider_id: string
+    service_zone_id: string
+    shipping_profile_id: string
+    type: { label: string; description: string; code: string }
+    prices: (
+      | { currency_code: string; amount: number }
+      | { region_id: string; amount: number }
+    )[]
+    rules: { attribute: string; value: string; operator: "eq" }[]
+  }[] = []
 
   if (!optionNames.has("Delivery")) {
     shippingOptionsToCreate.push({
@@ -619,7 +651,11 @@ export default async function seedRestaurantCommerce({
     (existingProducts ?? []).map((p: { handle: string }) => p.handle)
   )
 
-  const productsToCreate = []
+  const productsToCreate: Array<{
+    title: string
+    handle: string
+    [key: string]: unknown
+  }> = []
 
   if (!existingHandles.has("classic-beef-burger")) {
     productsToCreate.push({

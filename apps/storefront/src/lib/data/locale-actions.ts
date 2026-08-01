@@ -42,15 +42,19 @@ export const updateLocale = async (localeCode: string): Promise<string> => {
   // Update cart with the new locale if a cart exists
   const cartId = await getCartId()
   if (cartId) {
-    const headers = {
-      ...(await getAuthHeaders()),
-    }
+    try {
+      const headers = {
+        ...(await getAuthHeaders()),
+      }
 
-    await sdk.store.cart.update(cartId, { locale: localeCode }, {}, headers)
+      await sdk.store.cart.update(cartId, { locale: localeCode }, {}, headers)
 
-    const cartCacheTag = await getCacheTag("carts")
-    if (cartCacheTag) {
-      revalidateTag(cartCacheTag)
+      const cartCacheTag = await getCacheTag("carts")
+      if (cartCacheTag) {
+        revalidateTag(cartCacheTag)
+      }
+    } catch {
+      // Cart locale is optional; UI locale cookie still applies
     }
   }
 

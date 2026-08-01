@@ -24,7 +24,15 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
 export async function POST(req: MedusaRequest, res: MedusaResponse) {
   const restaurant: RestaurantModuleService =
     req.scope.resolve(RESTAURANT_MODULE)
-  const body = UpdateGroupSchema.parse(req.body)
+  const raw = (req.body || {}) as Record<string, unknown>
+
+  if (raw.action === "duplicate") {
+    const group = await restaurant.duplicateModifierGroup(req.params.id)
+    res.status(201).json({ modifier_group: group })
+    return
+  }
+
+  const body = UpdateGroupSchema.parse(raw)
   await restaurant.updateModifierGroups({
     id: req.params.id,
     ...body,

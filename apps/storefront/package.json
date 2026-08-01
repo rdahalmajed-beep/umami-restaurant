@@ -11,7 +11,9 @@
     "dev": "next dev --turbopack -p 8000",
     "build": "next build",
     "start": "next start -p 8000",
-    "lint": "next lint",
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "tsc --noEmit",
+    "test": "node -e \"console.log('No storefront unit tests yet'); process.exit(0)\"",
     "analyze": "ANALYZE=true next build"
   },
   "dependencies": {

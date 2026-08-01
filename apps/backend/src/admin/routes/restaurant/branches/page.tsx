@@ -1,5 +1,3 @@
-import { defineRouteConfig } from "@medusajs/admin-sdk"
-import { MapPin } from "@medusajs/icons"
 import {
   Badge,
   Button,
@@ -15,6 +13,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
 import { Link } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 
 type Branch = {
   id: string
@@ -23,12 +22,15 @@ type Branch = {
   phone?: string | null
   address?: string | null
   is_active: boolean
+  is_paused?: boolean
+  pause_reason?: string | null
   accepts_delivery: boolean
   accepts_pickup: boolean
   preparation_minutes: number
 }
 
 const BranchesPage = () => {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const { data, isLoading } = useQuery({
     queryKey: ["restaurant-branches"],
@@ -36,7 +38,7 @@ const BranchesPage = () => {
       const res = await fetch("/admin/restaurant/branches", {
         credentials: "include",
       })
-      if (!res.ok) throw new Error("Failed to load branches")
+      if (!res.ok) throw new Error(t("restaurant.branches.loadError"))
       return (await res.json()) as { branches: Branch[] }
     },
   })
@@ -64,11 +66,11 @@ const BranchesPage = () => {
           accepts_pickup: true,
         }),
       })
-      if (!res.ok) throw new Error("Failed to create branch")
+      if (!res.ok) throw new Error(t("restaurant.branches.createError"))
       return res.json()
     },
     onSuccess: () => {
-      toast.success("Branch created")
+      toast.success(t("restaurant.branches.created"))
       qc.invalidateQueries({ queryKey: ["restaurant-branches"] })
     },
     onError: (e: Error) => toast.error(e.message),
@@ -82,7 +84,37 @@ const BranchesPage = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ is_active: !branch.is_active }),
       })
-      if (!res.ok) throw new Error("Failed to update branch")
+      if (!res.ok) throw new Error(t("restaurant.branches.updateError"))
+      return res.json()
+    },
+    onSuccess: () =>
+      qc.invalidateQueries({ queryKey: ["restaurant-branches"] }),
+    onError: (e: Error) => toast.error(e.message),
+  })
+
+  const togglePause = useMutation({
+    mutationFn: async (branch: Branch) => {
+      let reason: string | null = null
+      if (!branch.is_paused) {
+        reason =
+          window.prompt(t("restaurant.branchDetail.pauseReasonPrompt")) || ""
+        if (!reason.trim()) {
+          throw new Error(t("restaurant.branches.pauseReasonRequired"))
+        }
+      }
+      const res = await fetch(
+        `/admin/restaurant/branches/${branch.id}/pause`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            paused: !branch.is_paused,
+            reason: branch.is_paused ? null : reason,
+          }),
+        }
+      )
+      if (!res.ok) throw new Error(t("restaurant.branches.updateError"))
       return res.json()
     },
     onSuccess: () =>
@@ -92,37 +124,37 @@ const BranchesPage = () => {
 
   return (
     <div className="flex flex-col gap-y-4 p-6">
-      <div className="flex items-center justify-between">
-        <Heading level="h1">Branches</Heading>
+      <div className="flex items-center justify-between gap-3">
+        <Heading level="h1">{t("restaurant.branches.title")}</Heading>
         <Button asChild variant="secondary" size="small">
-          <Link to="/restaurant/modifier-groups">Modifiers</Link>
+          <Link to="/restaurant">{t("restaurant.hub.back")}</Link>
         </Button>
       </div>
 
       <Container className="p-4 flex flex-col gap-y-3">
-        <Heading level="h2">Create branch</Heading>
+        <Heading level="h2">{t("restaurant.branches.createTitle")}</Heading>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
-            <Label>Name</Label>
+            <Label>{t("restaurant.branches.name")}</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div>
-            <Label>Slug</Label>
+            <Label>{t("restaurant.branches.slug")}</Label>
             <Input value={slug} onChange={(e) => setSlug(e.target.value)} />
           </div>
           <div>
-            <Label>Phone</Label>
+            <Label>{t("restaurant.branches.phone")}</Label>
             <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
           </div>
           <div>
-            <Label>Address</Label>
+            <Label>{t("restaurant.branches.address")}</Label>
             <Input
               value={address}
               onChange={(e) => setAddress(e.target.value)}
             />
           </div>
           <div>
-            <Label>Prep minutes</Label>
+            <Label>{t("restaurant.branches.prepMinutes")}</Label>
             <Input
               type="number"
               value={prep}
@@ -135,22 +167,38 @@ const BranchesPage = () => {
           disabled={!name || !slug || createMutation.isPending}
           isLoading={createMutation.isPending}
         >
-          Create branch
+          {t("restaurant.branches.create")}
         </Button>
       </Container>
 
       <Container className="p-0 overflow-hidden">
         {isLoading ? (
-          <Text className="p-4">Loading…</Text>
+          <Text className="p-4">{t("restaurant.branches.loading")}</Text>
         ) : (
           <Table>
             <Table.Header>
               <Table.Row>
-                <Table.HeaderCell>Name</Table.HeaderCell>
-                <Table.HeaderCell>Slug</Table.HeaderCell>
-                <Table.HeaderCell>Delivery / Pickup</Table.HeaderCell>
-                <Table.HeaderCell>Prep</Table.HeaderCell>
-                <Table.HeaderCell>Active</Table.HeaderCell>
+                <Table.HeaderCell>
+                  {t("restaurant.branches.name")}
+                </Table.HeaderCell>
+                <Table.HeaderCell>
+                  {t("restaurant.branches.slug")}
+                </Table.HeaderCell>
+                <Table.HeaderCell>
+                  {t("restaurant.branches.deliveryPickup")}
+                </Table.HeaderCell>
+                <Table.HeaderCell>
+                  {t("restaurant.branches.prep")}
+                </Table.HeaderCell>
+                <Table.HeaderCell>
+                  {t("restaurant.branches.active")}
+                </Table.HeaderCell>
+                <Table.HeaderCell>
+                  {t("restaurant.branches.paused")}
+                </Table.HeaderCell>
+                <Table.HeaderCell>
+                  {t("restaurant.branches.actions")}
+                </Table.HeaderCell>
               </Table.Row>
             </Table.Header>
             <Table.Body>
@@ -171,6 +219,32 @@ const BranchesPage = () => {
                       onCheckedChange={() => toggleActive.mutate(b)}
                     />
                   </Table.Cell>
+                  <Table.Cell>
+                    <div className="flex flex-col gap-1">
+                      <Button
+                        size="small"
+                        variant={b.is_paused ? "primary" : "secondary"}
+                        isLoading={togglePause.isPending}
+                        onClick={() => togglePause.mutate(b)}
+                      >
+                        {b.is_paused
+                          ? t("restaurant.branches.resume")
+                          : t("restaurant.branches.pause")}
+                      </Button>
+                      {b.is_paused && b.pause_reason ? (
+                        <Text className="text-xs text-ui-fg-subtle">
+                          {b.pause_reason}
+                        </Text>
+                      ) : null}
+                    </div>
+                  </Table.Cell>
+                  <Table.Cell>
+                    <Button asChild size="small" variant="secondary">
+                      <Link to={`/restaurant/branches/${b.id}`}>
+                        {t("restaurant.branches.edit")}
+                      </Link>
+                    </Button>
+                  </Table.Cell>
                 </Table.Row>
               ))}
             </Table.Body>
@@ -180,10 +254,5 @@ const BranchesPage = () => {
     </div>
   )
 }
-
-export const config = defineRouteConfig({
-  label: "Branches",
-  icon: MapPin,
-})
 
 export default BranchesPage

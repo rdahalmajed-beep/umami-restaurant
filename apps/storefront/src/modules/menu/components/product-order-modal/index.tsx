@@ -9,6 +9,7 @@ import Image from "next/image"
 import { Fragment, useEffect, useState } from "react"
 import { getProductModifiers } from "@lib/data/restaurant"
 import Spinner from "@modules/common/icons/spinner"
+import { useLocale } from "@lib/context/locale-context"
 
 type Props = {
   product: HttpTypes.StoreProduct | null
@@ -23,6 +24,7 @@ export default function ProductOrderModal({
   isOpen,
   close,
 }: Props) {
+  const { t } = useLocale()
   const [modifierGroups, setModifierGroups] = useState<StoreModifierGroup[]>([])
   const [loadingMods, setLoadingMods] = useState(false)
 
@@ -89,7 +91,7 @@ export default function ProductOrderModal({
                       <button
                         type="button"
                         onClick={close}
-                        className="absolute right-3 top-3 rounded-full bg-white/90 p-2 text-umami-ink shadow"
+                        className="absolute end-3 top-3 rounded-full bg-white/90 p-2 text-umami-ink shadow"
                         data-testid="close-product-modal"
                         aria-label="Close"
                       >
@@ -119,7 +121,7 @@ export default function ProductOrderModal({
                           region={region}
                           modifierGroups={modifierGroups}
                           quantityEnabled
-                          addLabel="Add to Order"
+                          addLabel={t("product.addToOrder")}
                           onAdded={close}
                           hideMobileActions
                         />

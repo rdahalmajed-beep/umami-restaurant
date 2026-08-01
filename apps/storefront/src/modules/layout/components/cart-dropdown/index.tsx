@@ -15,6 +15,7 @@ import LineItemPrice from "@modules/common/components/line-item-price"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import Thumbnail from "@modules/products/components/thumbnail"
 import { updateLineItem } from "@lib/data/cart"
+import { useLocale } from "@lib/context/locale-context"
 import { usePathname } from "next/navigation"
 import { Fragment, useEffect, useRef, useState, useTransition } from "react"
 import X from "@modules/common/icons/x"
@@ -24,6 +25,7 @@ const CartDropdown = ({
 }: {
   cart?: HttpTypes.StoreCart | null
 }) => {
+  const { t } = useLocale()
   const [cartOpen, setCartOpen] = useState(false)
   const [pending, startTransition] = useTransition()
 
@@ -68,7 +70,7 @@ const CartDropdown = ({
         onClick={open}
         data-testid="nav-cart-link"
       >
-        Cart ({totalItems})
+        {t("nav.cart")} ({totalItems})
       </button>
 
       <Transition show={cartOpen} as={Fragment}>
@@ -87,15 +89,15 @@ const CartDropdown = ({
 
           <div className="fixed inset-0 overflow-hidden">
             <div className="absolute inset-0 overflow-hidden">
-              <div className="pointer-events-none fixed inset-y-0 right-0 flex max-w-full pl-8">
+              <div className="pointer-events-none fixed inset-y-0 end-0 flex max-w-full ps-8">
                 <TransitionChild
                   as={Fragment}
                   enter="transform transition ease-out duration-280"
-                  enterFrom="translate-x-full"
+                  enterFrom="translate-x-full rtl:-translate-x-full"
                   enterTo="translate-x-0"
                   leave="transform transition ease-in duration-200"
                   leaveFrom="translate-x-0"
-                  leaveTo="translate-x-full"
+                  leaveTo="translate-x-full rtl:-translate-x-full"
                 >
                   <DialogPanel
                     className="pointer-events-auto w-screen max-w-md bg-umami-fog shadow-xl flex flex-col h-full animate-drawer-in"
@@ -103,12 +105,12 @@ const CartDropdown = ({
                   >
                     <div className="flex items-center justify-between border-b border-umami-ink/10 px-4 py-4">
                       <h3 className="font-display text-xl text-umami-ink">
-                        Your order
+                        {t("cart.yourOrder")}
                       </h3>
                       <button
                         type="button"
                         onClick={close}
-                        aria-label="Close cart"
+                        aria-label={t("cart.close")}
                         data-testid="close-cart-drawer"
                       >
                         <X size="20" />
@@ -201,7 +203,7 @@ const CartDropdown = ({
                                       className="text-xs"
                                       data-testid="cart-item-remove-button"
                                     >
-                                      Remove
+                                      {t("cart.remove")}
                                     </DeleteButton>
                                   </div>
                                 </div>
@@ -211,7 +213,7 @@ const CartDropdown = ({
 
                         <div className="border-t border-umami-ink/10 p-4 flex flex-col gap-y-3 text-sm">
                           <div className="flex justify-between text-umami-ink/70">
-                            <span>Subtotal</span>
+                            <span>{t("cart.subtotal")}</span>
                             <span data-testid="cart-subtotal" data-value={subtotal}>
                               {convertToLocale({
                                 amount: subtotal,
@@ -221,7 +223,7 @@ const CartDropdown = ({
                           </div>
                           {shipping > 0 && (
                             <div className="flex justify-between text-umami-ink/70">
-                              <span>Fees</span>
+                              <span>{t("cart.fees")}</span>
                               <span>
                                 {convertToLocale({
                                   amount: shipping,
@@ -231,7 +233,7 @@ const CartDropdown = ({
                             </div>
                           )}
                           <div className="flex justify-between font-semibold text-umami-ink text-base">
-                            <span>Total</span>
+                            <span>{t("cart.total")}</span>
                             <span>
                               {convertToLocale({
                                 amount: total,
@@ -246,7 +248,7 @@ const CartDropdown = ({
                               onClick={close}
                               data-testid="checkout-button"
                             >
-                              Checkout
+                              {t("cart.checkout")}
                             </Button>
                           </LocalizedClientLink>
                           <LocalizedClientLink href="/cart" passHref>
@@ -257,7 +259,7 @@ const CartDropdown = ({
                               onClick={close}
                               data-testid="go-to-cart-button"
                             >
-                              View full cart
+                              {t("cart.viewFullCart")}
                             </Button>
                           </LocalizedClientLink>
                         </div>
@@ -267,9 +269,9 @@ const CartDropdown = ({
                         <span className="bg-umami-ink text-white text-sm flex items-center justify-center w-8 h-8 rounded-full">
                           0
                         </span>
-                        <p className="text-umami-ink/70">Your order is empty.</p>
+                        <p className="text-umami-ink/70">{t("cart.empty")}</p>
                         <LocalizedClientLink href="/store" onClick={close}>
-                          <Button>Browse menu</Button>
+                          <Button>{t("cart.browseMenu")}</Button>
                         </LocalizedClientLink>
                       </div>
                     )}

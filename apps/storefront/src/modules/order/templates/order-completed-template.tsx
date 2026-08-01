@@ -8,18 +8,16 @@ import OnboardingCta from "@modules/order/components/onboarding-cta"
 import OrderDetails from "@modules/order/components/order-details"
 import ShippingDetails from "@modules/order/components/shipping-details"
 import PaymentDetails from "@modules/order/components/payment-details"
+import KitchenStatusTracker from "@modules/order/components/kitchen-status-tracker"
 import { HttpTypes } from "@medusajs/types"
-import { getOrderRestaurantStatus } from "@lib/data/restaurant"
+import {
+  getOrderRestaurantStatus,
+  claimOrderRestaurantAccess,
+} from "@lib/data/restaurant"
+import LocalizedClientLink from "@modules/common/components/localized-client-link"
 
 type OrderCompletedTemplateProps = {
   order: HttpTypes.StoreOrder
-}
-
-function formatStatus(status: string) {
-  return status
-    .split("_")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ")
 }
 
 export default async function OrderCompletedTemplate({
@@ -31,9 +29,15 @@ export default async function OrderCompletedTemplate({
   const restaurantMeta = (order.metadata?.restaurant || {}) as {
     order_type?: "delivery" | "pickup"
     branch_id?: string
+    guest_access_token?: string
   }
 
-  const statusPayload = await getOrderRestaurantStatus(order.id)
+  let accessToken = restaurantMeta.guest_access_token || null
+  if (!accessToken && order.email) {
+    accessToken = await claimOrderRestaurantAccess(order.id, order.email)
+  }
+
+  const statusPayload = await getOrderRestaurantStatus(order.id, accessToken)
   const kitchenStatus =
     statusPayload.restaurant_order?.status || "received"
   const orderType =
@@ -61,10 +65,7 @@ export default async function OrderCompletedTemplate({
             </span>
           </Heading>
 
-          <div
-            className="grid grid-cols-2 small:grid-cols-4 gap-3"
-            data-testid="restaurant-order-meta"
-          >
+          <div className="grid grid-cols-2 small:grid-cols-4 gap-3">
             <div className="bg-umami-mist/60 p-3">
               <Text className="text-xs text-umami-ink/50">Order #</Text>
               <Text
@@ -74,46 +75,35 @@ export default async function OrderCompletedTemplate({
                 {order.display_id}
               </Text>
             </div>
-            <div className="bg-umami-mist/60 p-3">
-              <Text className="text-xs text-umami-ink/50">Status</Text>
-              <Text
-                className="font-semibold text-umami-leaf capitalize"
-                data-testid="kitchen-status"
-              >
-                {formatStatus(kitchenStatus)}
-              </Text>
-            </div>
-            <div className="bg-umami-mist/60 p-3">
-              <Text className="text-xs text-umami-ink/50">Est. prep</Text>
-              <Text
-                className="font-semibold text-umami-ink"
-                data-testid="prep-time"
-              >
-                ~{prepMinutes} min
-              </Text>
-            </div>
-            <div className="bg-umami-mist/60 p-3">
-              <Text className="text-xs text-umami-ink/50">Order type</Text>
-              <Text
-                className="font-semibold text-umami-ink capitalize"
-                data-testid="order-type"
-              >
-                {orderType || "—"}
-              </Text>
-            </div>
           </div>
 
-          {branch && (
+          <KitchenStatusTracker
+            orderId={order.id}
+            accessToken={accessToken}
+            initialStatus={kitchenStatus}
+            orderType={orderType}
+            prepMinutes={prepMinutes}
+            branchName={branch?.name || null}
+          />
+
+          <LocalizedClientLink
+            href={`/order/${order.id}/status${
+              accessToken
+                ? `?token=${encodeURIComponent(accessToken)}`
+                : ""
+            }`}
+            className="text-sm text-umami-leaf underline underline-offset-2"
+            data-testid="open-live-status"
+          >
+            Open live kitchen status
+          </LocalizedClientLink>
+
+          {branch?.address ? (
             <div data-testid="order-branch">
-              <Text className="text-xs text-umami-ink/50">Branch</Text>
-              <Text className="font-semibold text-umami-ink">{branch.name}</Text>
-              {branch.address ? (
-                <Text className="text-sm text-umami-ink/60">
-                  {branch.address}
-                </Text>
-              ) : null}
+              <Text className="text-xs text-umami-ink/50">Address</Text>
+              <Text className="text-sm text-umami-ink/60">{branch.address}</Text>
             </div>
-          )}
+          ) : null}
 
           <OrderDetails order={order} showStatus />
           <Heading level="h2" className="font-display text-2xl text-umami-ink">

@@ -1,4 +1,3 @@
-import { defineRouteConfig } from "@medusajs/admin-sdk"
 import {
   Badge,
   Button,
@@ -12,8 +11,9 @@ import {
   toast,
 } from "@medusajs/ui"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Link, useParams } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 
 type ModifierOption = {
   id: string
@@ -36,6 +36,7 @@ type ModifierGroup = {
 }
 
 const ModifierGroupDetailPage = () => {
+  const { t } = useTranslation()
   const { id } = useParams()
   const qc = useQueryClient()
 
@@ -45,7 +46,7 @@ const ModifierGroupDetailPage = () => {
       const res = await fetch(`/admin/restaurant/modifier-groups/${id}`, {
         credentials: "include",
       })
-      if (!res.ok) throw new Error("Failed to load group")
+      if (!res.ok) throw new Error(t("restaurant.modifiers.loadGroupError"))
       return (await res.json()) as { modifier_group: ModifierGroup }
     },
     enabled: !!id,
@@ -53,9 +54,44 @@ const ModifierGroupDetailPage = () => {
 
   const group = data?.modifier_group
 
+  const [name, setName] = useState("")
+  const [isRequired, setIsRequired] = useState(true)
+  const [minSelections, setMinSelections] = useState(1)
+  const [maxSelections, setMaxSelections] = useState(1)
   const [optName, setOptName] = useState("")
   const [optPrice, setOptPrice] = useState("0")
   const [optDefault, setOptDefault] = useState(false)
+
+  useEffect(() => {
+    if (!group) return
+    setName(group.name)
+    setIsRequired(group.is_required)
+    setMinSelections(group.min_selections)
+    setMaxSelections(group.max_selections)
+  }, [group?.id])
+
+  const saveGroup = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/admin/restaurant/modifier-groups/${id}`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          is_required: isRequired,
+          min_selections: minSelections,
+          max_selections: maxSelections,
+        }),
+      })
+      if (!res.ok) throw new Error(t("restaurant.modifiers.updateGroupError"))
+      return res.json()
+    },
+    onSuccess: () => {
+      toast.success(t("restaurant.modifiers.groupSaved"))
+      qc.invalidateQueries({ queryKey: ["restaurant-modifier-group", id] })
+    },
+    onError: (e: Error) => toast.error(e.message),
+  })
 
   const addOption = useMutation({
     mutationFn: async () => {
@@ -74,11 +110,11 @@ const ModifierGroupDetailPage = () => {
           }),
         }
       )
-      if (!res.ok) throw new Error("Failed to add option")
+      if (!res.ok) throw new Error(t("restaurant.modifiers.addOptionError"))
       return res.json()
     },
     onSuccess: () => {
-      toast.success("Option added")
+      toast.success(t("restaurant.modifiers.optionAdded"))
       setOptName("")
       setOptPrice("0")
       setOptDefault(false)
@@ -98,7 +134,7 @@ const ModifierGroupDetailPage = () => {
           body: JSON.stringify({ is_active: !option.is_active }),
         }
       )
-      if (!res.ok) throw new Error("Failed to update option")
+      if (!res.ok) throw new Error(t("restaurant.modifiers.updateOptionError"))
       return res.json()
     },
     onSuccess: () => {
@@ -108,29 +144,75 @@ const ModifierGroupDetailPage = () => {
   })
 
   if (isLoading || !group) {
-    return <Text className="p-6">Loading…</Text>
+    return <Text className="p-6">{t("restaurant.modifiers.loading")}</Text>
   }
 
   return (
     <div className="flex flex-col gap-y-4 p-6">
       <div className="flex items-center gap-x-3">
         <Button asChild variant="secondary" size="small">
-          <Link to="/restaurant/modifier-groups">Back</Link>
+          <Link to="/restaurant/modifier-groups">
+            {t("restaurant.modifiers.detailBack")}
+          </Link>
         </Button>
         <Heading level="h1">{group.name}</Heading>
         <Badge size="2xsmall">{group.selection_type}</Badge>
-        {group.is_required && <Badge size="2xsmall">required</Badge>}
+        {group.is_required && (
+          <Badge size="2xsmall">
+            {t("restaurant.modifiers.requiredBadge")}
+          </Badge>
+        )}
       </div>
 
       <Container className="p-4 flex flex-col gap-y-3">
-        <Heading level="h2">Add option</Heading>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <Heading level="h2">{t("restaurant.modifiers.editGroup")}</Heading>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
-            <Label>Name</Label>
-            <Input value={optName} onChange={(e) => setOptName(e.target.value)} />
+            <Label>{t("restaurant.modifiers.name")}</Label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} />
+          </div>
+          <div className="flex items-center gap-x-2 pt-5">
+            <Switch checked={isRequired} onCheckedChange={setIsRequired} />
+            <Label>{t("restaurant.modifiers.required")}</Label>
           </div>
           <div>
-            <Label>Price adjustment (BHD)</Label>
+            <Label>{t("restaurant.modifiers.min")}</Label>
+            <Input
+              type="number"
+              value={minSelections}
+              onChange={(e) => setMinSelections(Number(e.target.value))}
+            />
+          </div>
+          <div>
+            <Label>{t("restaurant.modifiers.max")}</Label>
+            <Input
+              type="number"
+              value={maxSelections}
+              onChange={(e) => setMaxSelections(Number(e.target.value))}
+            />
+          </div>
+        </div>
+        <Button
+          onClick={() => saveGroup.mutate()}
+          isLoading={saveGroup.isPending}
+          disabled={!name.trim()}
+        >
+          {t("restaurant.modifiers.saveGroup")}
+        </Button>
+      </Container>
+
+      <Container className="p-4 flex flex-col gap-y-3">
+        <Heading level="h2">{t("restaurant.modifiers.addOptionTitle")}</Heading>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div>
+            <Label>{t("restaurant.modifiers.name")}</Label>
+            <Input
+              value={optName}
+              onChange={(e) => setOptName(e.target.value)}
+            />
+          </div>
+          <div>
+            <Label>{t("restaurant.modifiers.priceAdjustment")}</Label>
             <Input
               value={optPrice}
               onChange={(e) => setOptPrice(e.target.value)}
@@ -138,7 +220,7 @@ const ModifierGroupDetailPage = () => {
           </div>
           <div className="flex items-center gap-x-2 pt-5">
             <Switch checked={optDefault} onCheckedChange={setOptDefault} />
-            <Label>Default</Label>
+            <Label>{t("restaurant.modifiers.default")}</Label>
           </div>
         </div>
         <Button
@@ -146,7 +228,7 @@ const ModifierGroupDetailPage = () => {
           disabled={!optName || addOption.isPending}
           isLoading={addOption.isPending}
         >
-          Add option
+          {t("restaurant.modifiers.addOption")}
         </Button>
       </Container>
 
@@ -154,11 +236,21 @@ const ModifierGroupDetailPage = () => {
         <Table>
           <Table.Header>
             <Table.Row>
-              <Table.HeaderCell>Name</Table.HeaderCell>
-              <Table.HeaderCell>Price adj.</Table.HeaderCell>
-              <Table.HeaderCell>Default</Table.HeaderCell>
-              <Table.HeaderCell>Active</Table.HeaderCell>
-              <Table.HeaderCell>Sort</Table.HeaderCell>
+              <Table.HeaderCell>
+                {t("restaurant.modifiers.name")}
+              </Table.HeaderCell>
+              <Table.HeaderCell>
+                {t("restaurant.modifiers.priceAdj")}
+              </Table.HeaderCell>
+              <Table.HeaderCell>
+                {t("restaurant.modifiers.default")}
+              </Table.HeaderCell>
+              <Table.HeaderCell>
+                {t("restaurant.modifiers.active")}
+              </Table.HeaderCell>
+              <Table.HeaderCell>
+                {t("restaurant.modifiers.sort")}
+              </Table.HeaderCell>
             </Table.Row>
           </Table.Header>
           <Table.Body>
@@ -171,7 +263,11 @@ const ModifierGroupDetailPage = () => {
                   <Table.Cell>
                     {Number(o.price_adjustment).toFixed(3)}
                   </Table.Cell>
-                  <Table.Cell>{o.is_default ? "Yes" : "No"}</Table.Cell>
+                  <Table.Cell>
+                    {o.is_default
+                      ? t("restaurant.modifiers.yes")
+                      : t("restaurant.modifiers.no")}
+                  </Table.Cell>
                   <Table.Cell>
                     <Switch
                       checked={o.is_active}
@@ -187,9 +283,5 @@ const ModifierGroupDetailPage = () => {
     </div>
   )
 }
-
-export const config = defineRouteConfig({
-  label: "Modifier Group",
-})
 
 export default ModifierGroupDetailPage

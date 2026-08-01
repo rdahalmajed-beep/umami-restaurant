@@ -1,6 +1,7 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { RESTAURANT_MODULE } from "../../../../modules/restaurant"
 import RestaurantModuleService from "../../../../modules/restaurant/service"
+import { OpeningHoursJsonSchema } from "../../../../modules/restaurant/opening-hours"
 import { z } from "zod"
 
 const CreateBranchSchema = z.object({
@@ -12,7 +13,7 @@ const CreateBranchSchema = z.object({
   accepts_delivery: z.boolean().optional(),
   accepts_pickup: z.boolean().optional(),
   preparation_minutes: z.number().int().positive().optional(),
-  opening_hours_json: z.unknown().optional().nullable(),
+  opening_hours_json: OpeningHoursJsonSchema,
 })
 
 export async function GET(req: MedusaRequest, res: MedusaResponse) {

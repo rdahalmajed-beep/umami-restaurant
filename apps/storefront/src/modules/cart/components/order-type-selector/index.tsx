@@ -3,7 +3,7 @@
 import { setCartRestaurantMeta } from "@lib/data/cart"
 import type { StoreBranch } from "types/restaurant"
 import { clx } from "@modules/common/components/ui"
-import { useEffect, useState, useTransition } from "react"
+import { useEffect, useRef, useState, useTransition } from "react"
 
 type Props = {
   branches: StoreBranch[]
@@ -25,6 +25,7 @@ export default function OrderTypeSelector({
   const [pending, startTransition] = useTransition()
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const didAutoSave = useRef(false)
 
   useEffect(() => {
     if (!branchId && branches[0]?.id) {
@@ -51,6 +52,18 @@ export default function OrderTypeSelector({
       }
     })
   }
+
+  // Persist defaults once so checkout can complete even if the user never clicks.
+  useEffect(() => {
+    if (didAutoSave.current) return
+    const nextBranch = branchId || branches[0]?.id
+    if (!nextBranch) return
+    didAutoSave.current = true
+    if (!initialOrderType || !initialBranchId) {
+      save(orderType, nextBranch)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-once hydrate
+  }, [branchId, branches, initialOrderType, initialBranchId, orderType])
 
   if (!branches.length) {
     return null

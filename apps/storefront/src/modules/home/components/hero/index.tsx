@@ -1,30 +1,50 @@
-import LocalizedClientLink from "@modules/common/components/localized-client-link"
-import { BRAND_NAME, BRAND_TAGLINE } from "@lib/constants/brand"
+"use client"
 
-const Hero = () => {
+import Image from "next/image"
+import LocalizedClientLink from "@modules/common/components/localized-client-link"
+import { useLocale } from "@lib/context/locale-context"
+import type { StoreBrandContent } from "types/restaurant"
+
+const Hero = ({ content }: { content?: StoreBrandContent | null }) => {
+  const { t, locale } = useLocale()
+  const isAr = locale.startsWith("ar")
+  const brand = content?.brand_name || t("brand.name")
+  const subtitle =
+    content?.hero?.subtitle ||
+    (isAr
+      ? "رامن وأطباق يابانية في المنامة"
+      : "Japanese ramen & sides in Manama")
+  const cta = content?.hero?.cta_label || t("hero.viewMenu")
+  const href = content?.hero?.cta_href || "/store"
+
   return (
     <section
-      className="relative w-full min-h-[78vh] overflow-hidden"
+      className="relative w-full overflow-hidden"
       data-testid="home-hero"
     >
-      <div
-        aria-hidden
-        className="absolute inset-0 umami-hero-media animate-umami-pan origin-center"
-      />
-      <div className="relative z-10 content-container flex min-h-[78vh] flex-col justify-end pb-14 pt-28 small:pb-20">
-        <p className="font-display text-5xl small:text-7xl text-white tracking-tight animate-umami-rise">
-          {BRAND_NAME}
+      <div aria-hidden className="absolute inset-0 umami-hero-media" />
+      <div className="relative z-10 content-container flex min-h-[52vh] flex-col items-center justify-center py-12 text-center">
+        <Image
+          src="/umami-logo.png"
+          alt={brand}
+          width={220}
+          height={220}
+          priority
+          className="h-36 w-36 small:h-44 small:w-44 object-contain animate-umami-rise drop-shadow-sm"
+        />
+        <h1 className="mt-5 font-display text-4xl small:text-5xl text-umami-ink tracking-tight animate-umami-rise [animation-delay:80ms]">
+          {brand}
+        </h1>
+        <p className="mt-2 max-w-sm text-base text-umami-ink/70 animate-umami-rise [animation-delay:140ms]">
+          {subtitle}
         </p>
-        <p className="mt-3 max-w-md text-base small:text-lg text-white/85 animate-umami-rise [animation-delay:120ms]">
-          {BRAND_TAGLINE}
-        </p>
-        <div className="mt-8 animate-umami-rise [animation-delay:220ms]">
+        <div className="mt-7 animate-umami-rise [animation-delay:200ms]">
           <LocalizedClientLink
-            href="/store"
-            className="inline-flex items-center justify-center rounded-soft bg-umami-saffron px-6 py-3 text-sm font-semibold text-umami-ink transition-transform hover:scale-[1.02] active:scale-[0.98]"
+            href={href.startsWith("/") ? href : "/store"}
+            className="umami-btn-accent"
             data-testid="hero-view-menu"
           >
-            View Menu
+            {cta}
           </LocalizedClientLink>
         </div>
       </div>

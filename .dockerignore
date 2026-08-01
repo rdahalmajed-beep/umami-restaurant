@@ -1,0 +1,18 @@
+# Docker build context = restaurant-platform repo root
+node_modules
+**/node_modules
+.git
+**/.git
+.medusa
+**/.medusa
+apps/storefront
+**/.env
+**/.env.*
+docs
+.turbo
+**/coverage
+**/.next
+**/dist
+agent-transcripts
+*.md
+!apps/backend/package.json

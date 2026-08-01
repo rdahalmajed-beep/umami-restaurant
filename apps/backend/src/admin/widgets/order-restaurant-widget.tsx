@@ -1,6 +1,7 @@
 import { defineWidgetConfig } from "@medusajs/admin-sdk"
 import { DetailWidgetProps, AdminOrder } from "@medusajs/framework/types"
 import { Container, Heading, Text } from "@medusajs/ui"
+import { useTranslation } from "react-i18next"
 
 type ModifierSnap = {
   group_name: string
@@ -19,33 +20,39 @@ type RestaurantMeta = {
 const OrderRestaurantWidget = ({
   data: order,
 }: DetailWidgetProps<AdminOrder>) => {
+  const { t } = useTranslation()
   const restaurant = (order.metadata?.restaurant || {}) as RestaurantMeta
   const items = order.items || []
 
   return (
     <Container className="p-4 flex flex-col gap-y-3">
-      <Heading level="h2">Restaurant order</Heading>
+      <Heading level="h2">{t("restaurant.order.title")}</Heading>
       <div className="text-sm flex flex-col gap-y-1">
         <Text>
-          Type: <strong>{restaurant.order_type || "—"}</strong>
+          {t("restaurant.order.type")}{" "}
+          <strong>{restaurant.order_type || "—"}</strong>
         </Text>
         <Text>
-          Branch:{" "}
+          {t("restaurant.order.branch")}{" "}
           <strong>
             {restaurant.branch_name || restaurant.branch_id || "—"}
           </strong>
         </Text>
         {restaurant.estimated_preparation_minutes != null && (
           <Text>
-            Est. prep: {restaurant.estimated_preparation_minutes} min
+            {t("restaurant.order.estPrep")}{" "}
+            {restaurant.estimated_preparation_minutes}{" "}
+            {t("restaurant.order.min")}
           </Text>
         )}
         {restaurant.customer_note && (
-          <Text>Note: {restaurant.customer_note}</Text>
+          <Text>
+            {t("restaurant.order.note")} {restaurant.customer_note}
+          </Text>
         )}
       </div>
 
-      <Heading level="h3">Item modifiers</Heading>
+      <Heading level="h3">{t("restaurant.order.itemModifiers")}</Heading>
       {items.map((item) => {
         const meta = (item.metadata || {}) as {
           restaurant_modifiers?: ModifierSnap[]
@@ -68,7 +75,9 @@ const OrderRestaurantWidget = ({
               </Text>
             ))}
             {meta.restaurant_note && (
-              <Text className="text-sm italic">Note: {meta.restaurant_note}</Text>
+              <Text className="text-sm italic">
+                {t("restaurant.order.note")} {meta.restaurant_note}
+              </Text>
             )}
           </div>
         )

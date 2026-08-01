@@ -21,6 +21,7 @@ const RestaurantOrder = model
       .default("received"),
     order_type: model.enum(["delivery", "pickup"]).nullable(),
     branch_id: model.text().nullable(),
+    version: model.number().default(1),
     last_transition_at: model.dateTime().nullable(),
     last_transition_by: model.text().nullable(),
     events: model.hasMany(() => RestaurantOrderStatusEvent, {

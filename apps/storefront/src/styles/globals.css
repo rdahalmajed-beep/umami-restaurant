@@ -3,22 +3,45 @@
 @import "tailwindcss/utilities";
 
 :root {
-  --umami-ink: #141814;
-  --umami-mist: #e4ebe3;
-  --umami-fog: #f3f6f1;
-  --umami-leaf: #2f5d4a;
-  --umami-saffron: #e0a21a;
-  --umami-ember: #c45a1a;
+  /* Brand from Umami logo — cream / chocolate / mustard */
+  --umami-ink: #3d2b1f;
+  --umami-cream: #f5f0e6;
+  --umami-cream-deep: #ebe4d6;
+  --umami-mist: #efe8da;
+  --umami-fog: #f5f0e6;
+  --umami-leaf: #3d2b1f;
+  --umami-saffron: #c9a227;
+  --umami-mustard: #c9a227;
+  --umami-ember: #8b5a2b;
+  --umami-white: #ffffff;
+  --font-umami-sans: "Manrope", "Segoe UI", "Tahoma", sans-serif;
+  --font-umami-display: "Bricolage Grotesque", "Manrope", "Segoe UI", sans-serif;
 }
 
 body {
-  background-color: var(--umami-fog);
+  background-color: var(--umami-cream);
   color: var(--umami-ink);
-  font-family: var(--font-umami-sans), Manrope, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  text-rendering: optimizeLegibility;
+}
+
+html[lang="ar"] body,
+html[dir="rtl"] body {
+  --font-umami-sans: "Tahoma", "Segoe UI", sans-serif;
+  --font-umami-display: "Tahoma", "Segoe UI", sans-serif;
+}
+
+.font-display {
+  font-family: var(--font-umami-display);
+  letter-spacing: -0.02em;
+}
+
+html[lang="ar"] .font-display,
+html[dir="rtl"] .font-display {
+  letter-spacing: 0;
 }
 
 @layer utilities {
-  /* Chrome, Safari and Opera */
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
@@ -28,8 +51,8 @@ body {
   }
 
   .no-scrollbar {
-    -ms-overflow-style: none; /* IE and Edge */
-    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 
   input:focus ~ label,
@@ -38,7 +61,7 @@ body {
   }
 
   input:focus ~ label {
-    @apply left-0;
+    @apply start-0;
   }
 
   input:-webkit-autofill,
@@ -50,8 +73,8 @@ body {
   select:-webkit-autofill,
   select:-webkit-autofill:hover,
   select:-webkit-autofill:focus {
-    border: 1px solid #212121;
-    -webkit-text-fill-color: #212121;
+    border: 1px solid #3d2b1f;
+    -webkit-text-fill-color: #3d2b1f;
     -webkit-box-shadow: 0 0 0px 1000px #fff inset;
     transition: background-color 5000s ease-in-out 0s;
   }
@@ -66,11 +89,11 @@ body {
 
 @layer components {
   .content-container {
-    @apply max-w-[1440px] w-full mx-auto px-6;
+    @apply max-w-[720px] w-full mx-auto px-4 small:px-6;
   }
 
   .contrast-btn {
-    @apply px-4 py-2 border border-black rounded-full hover:bg-black hover:text-white transition-colors duration-200 ease-in;
+    @apply px-4 py-2 border border-umami-ink rounded-full hover:bg-umami-ink hover:text-white transition-colors duration-200 ease-in;
   }
 
   .text-xsmall-regular {
@@ -126,16 +149,25 @@ body {
   }
 
   .umami-atmosphere {
-    background:
-      radial-gradient(ellipse 80% 60% at 10% 0%, rgba(47, 93, 74, 0.18), transparent 55%),
-      radial-gradient(ellipse 70% 50% at 90% 20%, rgba(224, 162, 26, 0.16), transparent 50%),
-      linear-gradient(165deg, #f3f6f1 0%, #e4ebe3 45%, #d7e0d4 100%);
+    background: var(--umami-cream);
   }
 
   .umami-hero-media {
     background:
-      linear-gradient(120deg, rgba(20, 24, 20, 0.72) 0%, rgba(20, 24, 20, 0.35) 55%, rgba(20, 24, 20, 0.55) 100%),
-      url("https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=1920&q=80")
-        center / cover no-repeat;
+      radial-gradient(ellipse at 20% 30%, #c9a22744 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 70%, #3d2b1f22 0%, transparent 45%),
+      linear-gradient(165deg, #f5f0e6 0%, #ebe4d6 55%, #e0d6c4 100%);
+  }
+
+  .umami-tap {
+    @apply min-h-[44px] min-w-[44px] active:scale-[0.98] transition-transform;
+  }
+
+  .umami-btn-primary {
+    @apply inline-flex items-center justify-center rounded-full bg-umami-ink text-white px-5 py-3 text-sm font-semibold umami-tap hover:opacity-90;
+  }
+
+  .umami-btn-accent {
+    @apply inline-flex items-center justify-center rounded-full bg-umami-saffron text-umami-ink px-5 py-3 text-sm font-semibold umami-tap hover:opacity-90;
   }
 }

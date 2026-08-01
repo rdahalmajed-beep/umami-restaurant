@@ -11,6 +11,7 @@ import {
 } from "@medusajs/ui"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useMemo, useState } from "react"
+import { useTranslation } from "react-i18next"
 
 type StatusEvent = {
   id: string
@@ -25,6 +26,7 @@ type RestaurantOrder = {
   id: string
   order_id: string
   status: string
+  version?: number
   order_type?: string | null
   last_transition_at?: string | null
   last_transition_by?: string | null
@@ -41,11 +43,50 @@ const ALL_STATUSES = [
   "cancelled",
 ] as const
 
+function getPrimaryNext(
+  status: string,
+  orderType?: string | null
+): { status: string; labelKey: string } | null {
+  switch (status) {
+    case "received":
+      return { status: "accepted", labelKey: "restaurant.kitchen.accept" }
+    case "accepted":
+      return {
+        status: "preparing",
+        labelKey: "restaurant.kitchen.startPreparing",
+      }
+    case "preparing":
+      return { status: "ready", labelKey: "restaurant.kitchen.markReady" }
+    case "ready":
+      if (orderType === "delivery") {
+        return {
+          status: "out_for_delivery",
+          labelKey: "restaurant.kitchen.outForDelivery",
+        }
+      }
+      return {
+        status: "completed",
+        labelKey: "restaurant.kitchen.markDelivered",
+      }
+    case "out_for_delivery":
+      return {
+        status: "completed",
+        labelKey: "restaurant.kitchen.markCompleted",
+      }
+    default:
+      return null
+  }
+}
+
 const OrderKitchenStatusWidget = ({
   data: order,
 }: DetailWidgetProps<AdminOrder>) => {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const [nextStatus, setNextStatus] = useState<string>("")
+
+  const statusLabel = (status: string) =>
+    t(`restaurant.kitchen.status.${status}`, { defaultValue: status })
 
   const { data, isLoading } = useQuery({
     queryKey: ["restaurant-order-status", order.id],
@@ -54,7 +95,7 @@ const OrderKitchenStatusWidget = ({
         `/admin/restaurant/orders/${order.id}/status`,
         { credentials: "include" }
       )
-      if (!res.ok) throw new Error("Failed to load kitchen status")
+      if (!res.ok) throw new Error(t("restaurant.kitchen.loadError"))
       return (await res.json()) as { restaurant_order: RestaurantOrder }
     },
   })
@@ -68,6 +109,10 @@ const OrderKitchenStatusWidget = ({
     )
   }, [row?.events])
 
+  const primary = row
+    ? getPrimaryNext(row.status, row.order_type)
+    : null
+
   const transition = useMutation({
     mutationFn: async (status: string) => {
       const res = await fetch(
@@ -76,34 +121,38 @@ const OrderKitchenStatusWidget = ({
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status }),
+          body: JSON.stringify({
+            status,
+            expected_version: row?.version,
+          }),
         }
       )
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
-        throw new Error(err.message || "Transition failed")
+        throw new Error(err.message || t("restaurant.kitchen.transitionError"))
       }
       return res.json()
     },
     onSuccess: () => {
-      toast.success("Kitchen status updated")
+      toast.success(t("restaurant.kitchen.updated"))
       setNextStatus("")
       qc.invalidateQueries({
         queryKey: ["restaurant-order-status", order.id],
       })
+      qc.invalidateQueries({ queryKey: ["restaurant-kitchen-orders"] })
     },
     onError: (e: Error) => toast.error(e.message),
   })
 
   return (
     <Container className="p-4 flex flex-col gap-y-3">
-      <Heading level="h2">Kitchen status</Heading>
+      <Heading level="h2">{t("restaurant.kitchen.title")}</Heading>
       {isLoading || !row ? (
-        <Text>Loading…</Text>
+        <Text>{t("restaurant.kitchen.loading")}</Text>
       ) : (
         <>
           <div className="flex items-center gap-x-2">
-            <Badge size="2xsmall">{row.status}</Badge>
+            <Badge size="2xsmall">{statusLabel(row.status)}</Badge>
             {row.order_type && (
               <Badge size="2xsmall" color="blue">
                 {row.order_type}
@@ -112,22 +161,37 @@ const OrderKitchenStatusWidget = ({
           </div>
           {row.last_transition_at && (
             <Text className="text-ui-fg-subtle text-sm">
-              Last change:{" "}
-              {new Date(row.last_transition_at).toLocaleString()} by{" "}
+              {t("restaurant.kitchen.lastChange")}{" "}
+              {new Date(row.last_transition_at).toLocaleString()}{" "}
+              {t("restaurant.kitchen.by")}{" "}
               {row.last_transition_by || "—"}
             </Text>
+          )}
+
+          {primary && (
+            <Button
+              size="large"
+              className="w-full min-h-11"
+              isLoading={transition.isPending}
+              disabled={transition.isPending}
+              onClick={() => transition.mutate(primary.status)}
+            >
+              {t(primary.labelKey)}
+            </Button>
           )}
 
           <div className="flex gap-x-2 items-end">
             <div className="flex-1">
               <Select value={nextStatus} onValueChange={setNextStatus}>
                 <Select.Trigger>
-                  <Select.Value placeholder="Transition to…" />
+                  <Select.Value
+                    placeholder={t("restaurant.kitchen.transitionTo")}
+                  />
                 </Select.Trigger>
                 <Select.Content>
                   {ALL_STATUSES.filter((s) => s !== row.status).map((s) => (
                     <Select.Item key={s} value={s}>
-                      {s}
+                      {statusLabel(s)}
                     </Select.Item>
                   ))}
                 </Select.Content>
@@ -139,21 +203,24 @@ const OrderKitchenStatusWidget = ({
               isLoading={transition.isPending}
               onClick={() => transition.mutate(nextStatus)}
             >
-              Update
+              {t("restaurant.kitchen.update")}
             </Button>
           </div>
 
-          <Heading level="h3">History</Heading>
+          <Heading level="h3">{t("restaurant.kitchen.history")}</Heading>
           <div className="flex flex-col gap-y-1">
             {events.map((e) => (
               <Text key={e.id} className="text-sm text-ui-fg-subtle">
                 {new Date(e.created_at).toLocaleString()}:{" "}
-                {e.from_status || "∅"} → <strong>{e.to_status}</strong>
+                {e.from_status ? statusLabel(e.from_status) : "∅"} →{" "}
+                <strong>{statusLabel(e.to_status)}</strong>
                 {e.changed_by ? ` (${e.changed_by})` : ""}
                 {e.note ? ` — ${e.note}` : ""}
               </Text>
             ))}
-            {!events.length && <Text className="text-sm">No events yet</Text>}
+            {!events.length && (
+              <Text className="text-sm">{t("restaurant.kitchen.noEvents")}</Text>
+            )}
           </div>
         </>
       )}

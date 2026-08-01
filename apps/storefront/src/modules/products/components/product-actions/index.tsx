@@ -20,6 +20,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import ProductPrice from "../product-price"
 import MobileActions from "./mobile-actions"
 import { useRouter } from "next/navigation"
+import { useLocale } from "@lib/context/locale-context"
 
 type ProductActionsProps = {
   product: HttpTypes.StoreProduct
@@ -47,10 +48,12 @@ export default function ProductActions({
   disabled,
   modifierGroups = [],
   quantityEnabled = false,
-  addLabel = "Add to cart",
+  addLabel,
   onAdded,
   hideMobileActions = false,
 }: ProductActionsProps) {
+  const { t } = useLocale()
+  const resolvedAddLabel = addLabel ?? t("product.addToCart")
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -185,10 +188,10 @@ export default function ProductActions({
   }
 
   const buttonLabel = !selectedVariant
-    ? "Select variant"
+    ? t("product.selectVariant")
     : !inStock || !isValidVariant
-    ? "Out of stock"
-    : addLabel
+    ? t("product.outOfStock")
+    : resolvedAddLabel
 
   return (
     <>
@@ -231,14 +234,14 @@ export default function ProductActions({
                 htmlFor="item-note"
                 className="txt-medium text-ui-fg-subtle"
               >
-                Notes
+                {t("product.note")}
               </label>
               <textarea
                 id="item-note"
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 disabled={!!disabled || isAdding}
-                placeholder="e.g. No onions"
+                placeholder={t("product.notePlaceholder")}
                 maxLength={500}
                 rows={2}
                 className="w-full border border-ui-border-base rounded-rounded px-3 py-2 txt-medium"

@@ -14,6 +14,7 @@ import ErrorMessage from "../error-message"
 import ShippingAddress from "../shipping-address"
 import { SubmitButton } from "../submit-button"
 import type { StoreBranch } from "types/restaurant"
+import { useLocale } from "@lib/context/locale-context"
 
 const Addresses = ({
   cart,
@@ -24,6 +25,7 @@ const Addresses = ({
   customer: HttpTypes.StoreCustomer | null
   branches?: StoreBranch[]
 }) => {
+  const { t } = useLocale()
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
@@ -50,7 +52,9 @@ const Addresses = ({
 
   const [message, formAction] = useActionState(setAddresses, null)
 
-  const heading = isPickup ? "Your details" : "Delivery address"
+  const heading = isPickup
+    ? t("checkout.yourDetails")
+    : t("checkout.deliveryAddress")
 
   return (
     <div className="bg-white">

@@ -1,54 +1,14 @@
 /**
- * Unit tests for modifier constraint + price calculation rules (Phase 5).
+ * Unit tests for modifier validation against the real domain-rules module.
  */
+import { MedusaError } from "@medusajs/framework/utils"
+import {
+  validateModifierSelections,
+  type ModifierGroupInput,
+} from "../domain-rules"
 
-type Group = {
-  name: string
-  selection_type: "single" | "multiple"
-  is_required: boolean
-  min_selections: number
-  max_selections: number
-  options: { id: string; name: string; price_adjustment: number }[]
-}
-
-function validate(
-  groups: Group[],
-  optionIds: string[]
-): { ok: true; price: number } | { ok: false; error: string } {
-  const selected = new Set(optionIds)
-  let price = 0
-
-  for (const group of groups) {
-    const chosen = group.options.filter((o) => selected.has(o.id))
-    if (group.selection_type === "single" && chosen.length > 1) {
-      return {
-        ok: false,
-        error: `Group "${group.name}" allows only one selection`,
-      }
-    }
-    const min = group.is_required
-      ? Math.max(group.min_selections, 1)
-      : group.min_selections
-    if (chosen.length < min) {
-      return {
-        ok: false,
-        error: `Group "${group.name}" requires at least ${min} selection(s)`,
-      }
-    }
-    if (chosen.length > group.max_selections) {
-      return {
-        ok: false,
-        error: `Group "${group.name}" allows at most ${group.max_selections} selection(s)`,
-      }
-    }
-    for (const o of chosen) {
-      price += o.price_adjustment
-    }
-  }
-  return { ok: true, price: Math.round(price * 1000) / 1000 }
-}
-
-const cheese: Group = {
+const cheese: ModifierGroupInput = {
+  id: "g-cheese",
   name: "Choose Cheese",
   selection_type: "single",
   is_required: true,
@@ -61,7 +21,8 @@ const cheese: Group = {
   ],
 }
 
-const extras: Group = {
+const extras: ModifierGroupInput = {
+  id: "g-extras",
   name: "Extras",
   selection_type: "multiple",
   is_required: false,
@@ -74,24 +35,38 @@ const extras: Group = {
   ],
 }
 
-describe("restaurant modifier validation", () => {
+describe("validateModifierSelections", () => {
   it("requires cheese selection", () => {
-    const r = validate([cheese, extras], ["sauce"])
-    expect(r.ok).toBe(false)
+    expect(() => validateModifierSelections([cheese, extras], ["sauce"])).toThrow(
+      MedusaError
+    )
   })
 
-  it("prices cheddar + extra sauce", () => {
-    const r = validate([cheese, extras], ["ched", "sauce"])
-    expect(r).toEqual({ ok: true, price: 0.45 })
+  it("rejects two cheeses for a single group", () => {
+    expect(() =>
+      validateModifierSelections([cheese, extras], ["ched", "swiss"])
+    ).toThrow(/only one selection/)
   })
 
-  it("rejects two cheeses", () => {
-    const r = validate([cheese], ["ched", "swiss"])
-    expect(r.ok).toBe(false)
+  it("prices cheddar + patty + sauce", () => {
+    const r = validateModifierSelections([cheese, extras], [
+      "ched",
+      "patty",
+      "sauce",
+    ])
+    expect(r.modifiers_unit_price).toBe(1.45)
+    expect(r.snapshot).toHaveLength(3)
   })
 
-  it("allows no extras", () => {
-    const r = validate([cheese, extras], ["no"])
-    expect(r).toEqual({ ok: true, price: 0 })
+  it("fails when validateModifierSelections rules are broken (max extras)", () => {
+    expect(() =>
+      validateModifierSelections([cheese, extras], [
+        "ched",
+        "patty",
+        "jal",
+        "sauce",
+        "no",
+      ])
+    ).toThrow()
   })
 })

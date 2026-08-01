@@ -1,6 +1,6 @@
 /**
- * Shared restaurant order / cart metadata (Phase 5).
- * Kitchen status belongs in Phase 6 — do not store it here permanently.
+ * Restaurant fields stored on cart/order metadata.restaurant
+ * (snapshot + fulfillment intent — not durable domain source of truth).
  */
 export type RestaurantOrderMetadata = {
   order_type: "delivery" | "pickup"
@@ -8,19 +8,12 @@ export type RestaurantOrderMetadata = {
   branch_name?: string
   customer_note?: string
   estimated_preparation_minutes?: number
-}
-
-export type LineItemModifierSnapshot = {
-  group_id: string
-  group_name: string
-  option_id: string
-  option_name: string
-  price_adjustment: number
-}
-
-export type RestaurantLineItemMetadata = {
-  restaurant_modifiers: LineItemModifierSnapshot[]
-  restaurant_note?: string
-  base_unit_price: number
-  modifiers_unit_price: number
+  /** Shipping option chosen by setRestaurantFulfillmentIntentWorkflow */
+  shipping_option_id?: string
+  delivery_zone_id?: string
+  /** Authoritative delivery fee from restaurant_delivery_zone (FUL-UX-001) */
+  delivery_fee?: number
+  min_order_amount?: number
+  intent_updated_at?: string
+  guest_access_token?: string
 }

@@ -1,0 +1,69 @@
+{
+  "brand": {
+    "name": "Umami",
+    "tagline": "Japanese ramen & sides in Manama."
+  },
+  "nav": {
+    "menu": "Menu",
+    "account": "Account",
+    "cart": "Cart",
+    "home": "Home",
+    "openMenu": "Menu",
+    "language": "Language"
+  },
+  "hero": {
+    "viewMenu": "View Menu"
+  },
+  "orderType": {
+    "set": "Set order type",
+    "delivery": "Delivery",
+    "pickup": "Pickup"
+  },
+  "cart": {
+    "title": "Cart",
+    "yourOrder": "Your order",
+    "empty": "Your order is empty.",
+    "browseMenu": "Browse menu",
+    "subtotal": "Subtotal",
+    "fees": "Fees",
+    "total": "Total",
+    "checkout": "Checkout",
+    "goToCart": "Go to cart",
+    "viewFullCart": "View full cart",
+    "remove": "Remove",
+    "close": "Close cart"
+  },
+  "product": {
+    "addToOrder": "Add to Order",
+    "addToCart": "Add to cart",
+    "required": "Required",
+    "optional": "Optional",
+    "note": "Special note",
+    "notePlaceholder": "No onions, extra sauce…",
+    "selectVariant": "Select variant",
+    "outOfStock": "Out of stock"
+  },
+  "checkout": {
+    "deliveryAddress": "Delivery address",
+    "yourDetails": "Your details",
+    "continueToReview": "Continue to review",
+    "placeOrder": "Place order",
+    "shipping": "Shipping",
+    "payment": "Payment",
+    "review": "Review",
+    "paymentMethod": "Payment method"
+  },
+  "cartPage": {
+    "item": "Item",
+    "quantity": "Quantity",
+    "price": "Price",
+    "total": "Total"
+  },
+  "common": {
+    "loading": "Loading…",
+    "close": "Close",
+    "save": "Save",
+    "cancel": "Cancel",
+    "back": "Back"
+  }
+}

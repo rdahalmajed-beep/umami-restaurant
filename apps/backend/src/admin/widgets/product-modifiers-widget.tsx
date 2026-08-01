@@ -11,6 +11,7 @@ import {
 } from "@medusajs/ui"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState } from "react"
+import { useTranslation } from "react-i18next"
 
 type ModifierGroup = {
   id: string
@@ -23,6 +24,7 @@ type ModifierGroup = {
 const ProductModifiersWidget = ({
   data: product,
 }: DetailWidgetProps<AdminProduct>) => {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const [selectedGroupId, setSelectedGroupId] = useState<string>("")
 
@@ -33,7 +35,7 @@ const ProductModifiersWidget = ({
         `/admin/restaurant/products/${product.id}/modifier-groups`,
         { credentials: "include" }
       )
-      if (!res.ok) throw new Error("Failed to load linked groups")
+      if (!res.ok) throw new Error(t("restaurant.productModifiers.loadLinkedError"))
       return (await res.json()) as {
         modifier_groups: ModifierGroup[]
       }
@@ -46,7 +48,7 @@ const ProductModifiersWidget = ({
       const res = await fetch("/admin/restaurant/modifier-groups", {
         credentials: "include",
       })
-      if (!res.ok) throw new Error("Failed to load groups")
+      if (!res.ok) throw new Error(t("restaurant.productModifiers.loadGroupsError"))
       return (await res.json()) as { modifier_groups: ModifierGroup[] }
     },
   })
@@ -65,11 +67,11 @@ const ProductModifiersWidget = ({
           }),
         }
       )
-      if (!res.ok) throw new Error("Failed to link group")
+      if (!res.ok) throw new Error(t("restaurant.productModifiers.linkError"))
       return res.json()
     },
     onSuccess: () => {
-      toast.success("Group linked")
+      toast.success(t("restaurant.productModifiers.linked"))
       setSelectedGroupId("")
       qc.invalidateQueries({
         queryKey: ["product-modifier-groups", product.id],
@@ -87,11 +89,11 @@ const ProductModifiersWidget = ({
           credentials: "include",
         }
       )
-      if (!res.ok) throw new Error("Failed to unlink")
+      if (!res.ok) throw new Error(t("restaurant.productModifiers.unlinkError"))
       return res.json()
     },
     onSuccess: () => {
-      toast.success("Group unlinked")
+      toast.success(t("restaurant.productModifiers.unlinked"))
       qc.invalidateQueries({
         queryKey: ["product-modifier-groups", product.id],
       })
@@ -108,22 +110,27 @@ const ProductModifiersWidget = ({
 
   return (
     <Container className="p-4 flex flex-col gap-y-3">
-      <Heading level="h2">Restaurant modifiers</Heading>
+      <Heading level="h2">{t("restaurant.productModifiers.title")}</Heading>
       <Text className="text-ui-fg-subtle text-sm">
-        Link modifier groups (cheese, extras, etc.) to this product.
+        {t("restaurant.productModifiers.description")}
       </Text>
 
       <div className="flex gap-x-2 items-end">
         <div className="flex-1">
           <Select value={selectedGroupId} onValueChange={setSelectedGroupId}>
             <Select.Trigger>
-              <Select.Value placeholder="Select group…" />
+              <Select.Value
+                placeholder={t("restaurant.productModifiers.selectGroup")}
+              />
             </Select.Trigger>
             <Select.Content>
               {available.map((g) => (
                 <Select.Item key={g.id} value={g.id}>
                   {g.name} ({g.selection_type}
-                  {g.is_required ? ", required" : ""})
+                  {g.is_required
+                    ? `, ${t("restaurant.productModifiers.required")}`
+                    : ""}
+                  )
                 </Select.Item>
               ))}
             </Select.Content>
@@ -135,16 +142,22 @@ const ProductModifiersWidget = ({
           isLoading={linkMutation.isPending}
           onClick={() => linkMutation.mutate()}
         >
-          Link
+          {t("restaurant.productModifiers.link")}
         </Button>
       </div>
 
       <Table>
         <Table.Header>
           <Table.Row>
-            <Table.HeaderCell>Group</Table.HeaderCell>
-            <Table.HeaderCell>Type</Table.HeaderCell>
-            <Table.HeaderCell>Options</Table.HeaderCell>
+            <Table.HeaderCell>
+              {t("restaurant.productModifiers.group")}
+            </Table.HeaderCell>
+            <Table.HeaderCell>
+              {t("restaurant.productModifiers.type")}
+            </Table.HeaderCell>
+            <Table.HeaderCell>
+              {t("restaurant.productModifiers.options")}
+            </Table.HeaderCell>
             <Table.HeaderCell></Table.HeaderCell>
           </Table.Row>
         </Table.Header>
@@ -160,7 +173,7 @@ const ProductModifiersWidget = ({
                   variant="danger"
                   onClick={() => unlinkMutation.mutate(g.id)}
                 >
-                  Unlink
+                  {t("restaurant.productModifiers.unlink")}
                 </Button>
               </Table.Cell>
             </Table.Row>

@@ -10,8 +10,14 @@ export async function GET(req: MedusaRequest, res: MedusaResponse) {
   const restaurant: RestaurantModuleService =
     req.scope.resolve(RESTAURANT_MODULE)
 
-  const groups = await restaurant.listProductModifierGroupsDetailed(
-    req.params.id
+  const groups = await restaurant.listProductModifierGroupsForContext(
+    req.params.id,
+    {
+      branch_id:
+        typeof req.query.branch_id === "string" ? req.query.branch_id : null,
+      variant_id:
+        typeof req.query.variant_id === "string" ? req.query.variant_id : null,
+    }
   )
 
   res.json({

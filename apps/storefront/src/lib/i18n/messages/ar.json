@@ -1,0 +1,69 @@
+{
+  "brand": {
+    "name": "Umami",
+    "tagline": "رامن وأطباق يابانية في المنامة."
+  },
+  "nav": {
+    "menu": "القائمة",
+    "account": "الحساب",
+    "cart": "السلة",
+    "home": "الرئيسية",
+    "openMenu": "القائمة",
+    "language": "اللغة"
+  },
+  "hero": {
+    "viewMenu": "عرض القائمة"
+  },
+  "orderType": {
+    "set": "اختر نوع الطلب",
+    "delivery": "توصيل",
+    "pickup": "استلام"
+  },
+  "cart": {
+    "title": "السلة",
+    "yourOrder": "طلبك",
+    "empty": "طلبك فارغ.",
+    "browseMenu": "تصفح القائمة",
+    "subtotal": "المجموع الفرعي",
+    "fees": "الرسوم",
+    "total": "الإجمالي",
+    "checkout": "إتمام الطلب",
+    "goToCart": "الذهاب إلى السلة",
+    "viewFullCart": "عرض السلة كاملة",
+    "remove": "إزالة",
+    "close": "إغلاق السلة"
+  },
+  "product": {
+    "addToOrder": "أضف للطلب",
+    "addToCart": "أضف إلى السلة",
+    "required": "مطلوب",
+    "optional": "اختياري",
+    "note": "ملاحظة خاصة",
+    "notePlaceholder": "بدون بصل، صلصة إضافية…",
+    "selectVariant": "اختر النوع",
+    "outOfStock": "غير متوفر"
+  },
+  "checkout": {
+    "deliveryAddress": "عنوان التوصيل",
+    "yourDetails": "بياناتك",
+    "continueToReview": "متابعة للمراجعة",
+    "placeOrder": "تأكيد الطلب",
+    "shipping": "الشحن",
+    "payment": "الدفع",
+    "review": "المراجعة",
+    "paymentMethod": "طريقة الدفع"
+  },
+  "cartPage": {
+    "item": "الصنف",
+    "quantity": "الكمية",
+    "price": "السعر",
+    "total": "الإجمالي"
+  },
+  "common": {
+    "loading": "جاري التحميل…",
+    "close": "إغلاق",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "back": "رجوع"
+  }
+}

@@ -1,5 +1,3 @@
-import { defineRouteConfig } from "@medusajs/admin-sdk"
-import { Buildings } from "@medusajs/icons"
 import {
   Badge,
   Button,
@@ -16,6 +14,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useMemo, useState } from "react"
 import { Link } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 
 type ModifierOption = {
   id: string
@@ -38,6 +37,7 @@ type ModifierGroup = {
 }
 
 const ModifierGroupsPage = () => {
+  const { t } = useTranslation()
   const qc = useQueryClient()
   const { data, isLoading } = useQuery({
     queryKey: ["restaurant-modifier-groups"],
@@ -45,7 +45,7 @@ const ModifierGroupsPage = () => {
       const res = await fetch("/admin/restaurant/modifier-groups", {
         credentials: "include",
       })
-      if (!res.ok) throw new Error("Failed to load modifier groups")
+      if (!res.ok) throw new Error(t("restaurant.modifiers.loadError"))
       return (await res.json()) as { modifier_groups: ModifierGroup[] }
     },
   })
@@ -75,13 +75,34 @@ const ModifierGroupsPage = () => {
       })
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
-        throw new Error(err.message || "Create failed")
+        throw new Error(err.message || t("restaurant.modifiers.createError"))
       }
       return res.json()
     },
     onSuccess: () => {
-      toast.success("Modifier group created")
+      toast.success(t("restaurant.modifiers.created"))
       setName("")
+      qc.invalidateQueries({ queryKey: ["restaurant-modifier-groups"] })
+    },
+    onError: (e: Error) => toast.error(e.message),
+  })
+
+  const duplicateMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/admin/restaurant/modifier-groups/${id}`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "duplicate" }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.message || t("restaurant.modifiers.duplicateError"))
+      }
+      return res.json()
+    },
+    onSuccess: () => {
+      toast.success(t("restaurant.modifiers.duplicated"))
       qc.invalidateQueries({ queryKey: ["restaurant-modifier-groups"] })
     },
     onError: (e: Error) => toast.error(e.message),
@@ -91,22 +112,22 @@ const ModifierGroupsPage = () => {
 
   return (
     <div className="flex flex-col gap-y-4 p-6">
-      <div className="flex items-center justify-between">
-        <Heading level="h1">Modifier Groups</Heading>
+      <div className="flex items-center justify-between gap-3">
+        <Heading level="h1">{t("restaurant.modifiers.title")}</Heading>
         <Button asChild variant="secondary" size="small">
-          <Link to="/restaurant/branches">Branches</Link>
+          <Link to="/restaurant">{t("restaurant.hub.back")}</Link>
         </Button>
       </div>
 
       <Container className="p-4 flex flex-col gap-y-3">
-        <Heading level="h2">Create group</Heading>
+        <Heading level="h2">{t("restaurant.modifiers.createTitle")}</Heading>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
-            <Label>Name</Label>
+            <Label>{t("restaurant.modifiers.name")}</Label>
             <Input value={name} onChange={(e) => setName(e.target.value)} />
           </div>
           <div>
-            <Label>Selection type</Label>
+            <Label>{t("restaurant.modifiers.selectionType")}</Label>
             <Select
               value={selectionType}
               onValueChange={(v) =>
@@ -117,18 +138,22 @@ const ModifierGroupsPage = () => {
                 <Select.Value />
               </Select.Trigger>
               <Select.Content>
-                <Select.Item value="single">Single</Select.Item>
-                <Select.Item value="multiple">Multiple</Select.Item>
+                <Select.Item value="single">
+                  {t("restaurant.modifiers.single")}
+                </Select.Item>
+                <Select.Item value="multiple">
+                  {t("restaurant.modifiers.multiple")}
+                </Select.Item>
               </Select.Content>
             </Select>
           </div>
           <div className="flex items-center gap-x-2">
             <Switch checked={isRequired} onCheckedChange={setIsRequired} />
-            <Label>Required</Label>
+            <Label>{t("restaurant.modifiers.required")}</Label>
           </div>
           <div className="flex gap-x-3">
             <div>
-              <Label>Min</Label>
+              <Label>{t("restaurant.modifiers.min")}</Label>
               <Input
                 type="number"
                 value={minSelections}
@@ -136,7 +161,7 @@ const ModifierGroupsPage = () => {
               />
             </div>
             <div>
-              <Label>Max</Label>
+              <Label>{t("restaurant.modifiers.max")}</Label>
               <Input
                 type="number"
                 value={maxSelections}
@@ -150,22 +175,32 @@ const ModifierGroupsPage = () => {
           disabled={!name || createMutation.isPending}
           isLoading={createMutation.isPending}
         >
-          Create group
+          {t("restaurant.modifiers.create")}
         </Button>
       </Container>
 
       <Container className="p-0 overflow-hidden">
         {isLoading ? (
-          <Text className="p-4">Loading…</Text>
+          <Text className="p-4">{t("restaurant.modifiers.loading")}</Text>
         ) : (
           <Table>
             <Table.Header>
               <Table.Row>
-                <Table.HeaderCell>Name</Table.HeaderCell>
-                <Table.HeaderCell>Type</Table.HeaderCell>
-                <Table.HeaderCell>Required</Table.HeaderCell>
-                <Table.HeaderCell>Min / Max</Table.HeaderCell>
-                <Table.HeaderCell>Options</Table.HeaderCell>
+                <Table.HeaderCell>
+                  {t("restaurant.modifiers.name")}
+                </Table.HeaderCell>
+                <Table.HeaderCell>
+                  {t("restaurant.modifiers.type")}
+                </Table.HeaderCell>
+                <Table.HeaderCell>
+                  {t("restaurant.modifiers.required")}
+                </Table.HeaderCell>
+                <Table.HeaderCell>
+                  {t("restaurant.modifiers.minMax")}
+                </Table.HeaderCell>
+                <Table.HeaderCell>
+                  {t("restaurant.modifiers.options")}
+                </Table.HeaderCell>
                 <Table.HeaderCell></Table.HeaderCell>
               </Table.Row>
             </Table.Header>
@@ -176,17 +211,31 @@ const ModifierGroupsPage = () => {
                   <Table.Cell>
                     <Badge size="2xsmall">{g.selection_type}</Badge>
                   </Table.Cell>
-                  <Table.Cell>{g.is_required ? "Yes" : "No"}</Table.Cell>
+                  <Table.Cell>
+                    {g.is_required
+                      ? t("restaurant.modifiers.yes")
+                      : t("restaurant.modifiers.no")}
+                  </Table.Cell>
                   <Table.Cell>
                     {g.min_selections} / {g.max_selections}
                   </Table.Cell>
                   <Table.Cell>{g.options?.length ?? 0}</Table.Cell>
                   <Table.Cell>
-                    <Button asChild size="small" variant="secondary">
-                      <Link to={`/restaurant/modifier-groups/${g.id}`}>
-                        Edit
-                      </Link>
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button asChild size="small" variant="secondary">
+                        <Link to={`/restaurant/modifier-groups/${g.id}`}>
+                          {t("restaurant.modifiers.edit")}
+                        </Link>
+                      </Button>
+                      <Button
+                        size="small"
+                        variant="secondary"
+                        isLoading={duplicateMutation.isPending}
+                        onClick={() => duplicateMutation.mutate(g.id)}
+                      >
+                        {t("restaurant.modifiers.duplicate")}
+                      </Button>
+                    </div>
                   </Table.Cell>
                 </Table.Row>
               ))}
@@ -197,10 +246,5 @@ const ModifierGroupsPage = () => {
     </div>
   )
 }
-
-export const config = defineRouteConfig({
-  label: "Modifiers",
-  icon: Buildings,
-})
 
 export default ModifierGroupsPage

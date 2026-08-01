@@ -1,7 +1,4 @@
-# Same as root Dockerfile — keep in sync (Blueprint may use this path).
-# Medusa backend for Render (API; Admin optional via DISABLE_MEDUSA_ADMIN).
-# Build context = restaurant-platform repo root.
-
+# Same as root Dockerfile — keep in sync.
 FROM node:22-bookworm-slim AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
@@ -11,8 +8,7 @@ WORKDIR /app
 FROM base AS build
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc turbo.json ./
 COPY apps/backend/package.json ./apps/backend/
-RUN mkdir -p apps/storefront \
-  && printf '%s\n' '{"name":"@dtc/storefront","private":true,"version":"0.0.0"}' > apps/storefront/package.json
+COPY apps/storefront/package.json ./apps/storefront/
 RUN printf '\nnode-linker=hoisted\n' >> .npmrc \
   && pnpm config set minimum-release-age 0 \
   && pnpm config set strict-dep-builds false \

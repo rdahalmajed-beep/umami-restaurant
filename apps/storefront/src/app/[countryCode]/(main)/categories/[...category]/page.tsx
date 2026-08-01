@@ -19,10 +19,7 @@ type Props = {
   >
 }
 
-export async function generateStaticParams() {
-  // Dynamic at request time until hosted Medusa is stable for SSG
-  return []
-}
+export const dynamic = "force-dynamic"
 
 export async function generateMetadata(props: Props): Promise<Metadata> {
   const params = await props.params

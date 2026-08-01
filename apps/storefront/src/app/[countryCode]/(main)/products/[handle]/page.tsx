@@ -10,10 +10,7 @@ type Props = {
   searchParams: Promise<{ v_id?: string }>
 }
 
-export async function generateStaticParams() {
-  // Dynamic at request time until hosted Medusa is stable for SSG
-  return []
-}
+export const dynamic = "force-dynamic"
 
 function getImagesForVariant(
   product: HttpTypes.StoreProduct,

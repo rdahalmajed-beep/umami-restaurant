@@ -9,8 +9,7 @@ FROM base AS build
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc turbo.json ./
 COPY apps/backend/package.json ./apps/backend/
 COPY apps/storefront/package.json ./apps/storefront/
-RUN printf '\nnode-linker=hoisted\n' >> .npmrc \
-  && pnpm config set minimum-release-age 0 \
+RUN pnpm config set minimum-release-age 0 \
   && pnpm config set strict-dep-builds false \
   && pnpm install --frozen-lockfile --filter @dtc/backend... \
       --fetch-retries=5 --fetch-retry-mintimeout=20000 \
@@ -22,13 +21,14 @@ ENV MEDUSA_BACKEND_URL=$MEDUSA_BACKEND_URL
 ENV NODE_ENV=production
 RUN pnpm run build || test -d .medusa/server
 
-FROM node:22-bookworm-slim AS runner
+FROM base AS runner
 ENV NODE_ENV=production
 ENV NODE_OPTIONS=--max-old-space-size=384
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
 WORKDIR /app
-COPY --from=build /app/package.json /app/pnpm-lock.yaml /app/pnpm-workspace.yaml /app/.npmrc ./
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/apps/backend ./apps/backend
+COPY --from=build /pnpm /pnpm
+COPY --from=build /app /app
 WORKDIR /app/apps/backend
 EXPOSE 9000
-CMD ["sh", "-c", "/app/node_modules/.bin/medusa db:migrate && /app/node_modules/.bin/medusa start"]
+CMD ["sh", "-c", "pnpm exec medusa db:migrate && pnpm exec medusa start"]

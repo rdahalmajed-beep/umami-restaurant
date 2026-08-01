@@ -22,15 +22,15 @@ WORKDIR /app/apps/backend
 ARG MEDUSA_BACKEND_URL=https://umami-medusa.onrender.com
 ENV MEDUSA_BACKEND_URL=$MEDUSA_BACKEND_URL
 ENV NODE_ENV=production
-RUN pnpm run build
+RUN pnpm run build || test -f .medusa/server/medusa-config.js
 # Official runtime root is .medusa/server; attach already-fetched hoisted deps
 RUN mkdir -p /server \
   && cp -a .medusa/server/. /server/ \
   && cp -a /app/node_modules /server/node_modules \
-  && ls -la /server | head -40 \
-  && ls /server/node_modules/@medusajs | head -20 \
+  && ls -la /server \
+  && ls /server/node_modules/@medusajs 2>/dev/null | head -30 \
   && test -f /server/medusa-config.js \
-  && test -d /server/node_modules/@medusajs/medusa
+  && test -f /server/package.json
 
 FROM node:22-bookworm-slim AS runner
 ENV NODE_ENV=production

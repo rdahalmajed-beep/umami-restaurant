@@ -620,7 +620,7 @@ class RestaurantModuleService extends MedusaService({
     estimated_minutes?: number
     lead_time_minutes?: number
     is_paused?: boolean
-    zone_notes_json?: unknown
+    zone_notes_json?: Record<string, unknown> | null
   }) {
     const existing = await this.listBranchFulfillmentPolicies({
       branch_id: input.branch_id,

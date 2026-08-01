@@ -6,8 +6,8 @@ function verify(signature: string | null, body: string, secret: string) {
   if (!signature) return false
   const expected = createHmac("sha256", secret).update(body).digest("hex")
   try {
-    const a = Buffer.from(signature)
-    const b = Buffer.from(expected)
+    const a = new Uint8Array(Buffer.from(signature))
+    const b = new Uint8Array(Buffer.from(expected))
     return a.length === b.length && timingSafeEqual(a, b)
   } catch {
     return false

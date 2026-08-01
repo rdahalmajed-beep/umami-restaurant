@@ -38,4 +38,4 @@ ENV NODE_OPTIONS=--max-old-space-size=384
 WORKDIR /server
 COPY --from=build /server /server
 EXPOSE 9000
-CMD ["sh", "-c", "npm run predeploy && npm run start"]
+CMD ["sh", "-c", "node ./node_modules/@medusajs/cli/cli.js db:migrate && node ./node_modules/@medusajs/cli/cli.js start"]

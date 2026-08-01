@@ -13,7 +13,9 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc turbo.json ./
 COPY apps/backend/package.json ./apps/backend/
 COPY apps/storefront/package.json ./apps/storefront/
 RUN pnpm config set minimum-release-age 0 \
-  && pnpm install --frozen-lockfile --fetch-retries=5 --fetch-retry-mintimeout=20000
+  && pnpm config set strict-dep-builds false \
+  && pnpm install --frozen-lockfile --fetch-retries=5 --fetch-retry-mintimeout=20000 \
+  && pnpm rebuild -r
 COPY apps/backend ./apps/backend
 WORKDIR /app/apps/backend
 # Admin needs backend URL inlined at build when set

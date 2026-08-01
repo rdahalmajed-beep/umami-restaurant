@@ -24,7 +24,7 @@ ENV NODE_ENV=production
 RUN pnpm run build || test -d .medusa/server
 # Portable prod tree with real node_modules (not pnpm store symlinks)
 WORKDIR /app
-RUN pnpm --filter @dtc/backend deploy --prod /deploy \
+RUN pnpm --filter @dtc/backend deploy --prod --legacy /deploy \
   && mkdir -p /deploy/.medusa \
   && cp -a /app/apps/backend/.medusa/. /deploy/.medusa/ \
   && test -e /deploy/node_modules/.bin/medusa

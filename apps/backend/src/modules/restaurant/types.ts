@@ -17,3 +17,19 @@ export type RestaurantOrderMetadata = {
   intent_updated_at?: string
   guest_access_token?: string
 }
+
+export type {
+  ModifierSnapshotItem,
+  RestaurantOrderStatus,
+  ValidatedModifiersResult,
+} from "./domain-rules"
+
+/** Alias used by cart line metadata / validate-modifiers step */
+export type LineItemModifierSnapshot = import("./domain-rules").ModifierSnapshotItem
+
+export type RestaurantLineItemMetadata = {
+  restaurant_modifiers?: LineItemModifierSnapshot[]
+  restaurant_note?: string
+  base_unit_price?: number
+  modifiers_unit_price?: number
+}

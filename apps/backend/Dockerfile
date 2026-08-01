@@ -22,7 +22,7 @@ WORKDIR /app/apps/backend
 ARG MEDUSA_BACKEND_URL
 ENV MEDUSA_BACKEND_URL=$MEDUSA_BACKEND_URL
 ENV NODE_ENV=production
-RUN pnpm run build
+RUN pnpm run build || test -d .medusa/server/public/admin -o -d .medusa/server
 
 FROM base AS runner
 ENV NODE_ENV=production

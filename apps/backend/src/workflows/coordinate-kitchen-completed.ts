@@ -29,7 +29,11 @@ const coordinateOnCompletedStep = createStep(
 
     const row = await restaurant.getRestaurantOrderByOrderId(input.order_id)
     if (!row || row.status !== "completed") {
-      return new StepResponse({ skipped: true, reason: "not_completed" })
+      return new StepResponse({
+        skipped: true as boolean,
+        reason: "not_completed" as string | undefined,
+        order_id: undefined as string | undefined,
+      })
     }
 
     await restaurant.enqueueOutbox({
@@ -68,7 +72,11 @@ const coordinateOnCompletedStep = createStep(
       after: { kitchen_status: "completed" },
     })
 
-    return new StepResponse({ skipped: false, order_id: input.order_id })
+    return new StepResponse({
+      skipped: false as boolean,
+      reason: undefined as string | undefined,
+      order_id: input.order_id as string | undefined,
+    })
   }
 )
 

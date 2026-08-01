@@ -1,4 +1,6 @@
-# Same as root Dockerfile — keep in sync.
+# Medusa 2 on Render: compile to .medusa/server, reuse hoisted monorepo node_modules.
+# Build context = restaurant-platform repo root.
+
 FROM node:22-bookworm-slim AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
@@ -20,12 +22,15 @@ WORKDIR /app/apps/backend
 ARG MEDUSA_BACKEND_URL=https://umami-medusa.onrender.com
 ENV MEDUSA_BACKEND_URL=$MEDUSA_BACKEND_URL
 ENV NODE_ENV=production
-RUN pnpm run build || test -d .medusa/server
+RUN pnpm run build
+# Official runtime root is .medusa/server; attach already-fetched hoisted deps
 RUN mkdir -p /server \
-  && cp -a /app/apps/backend/.medusa/server/. /server/ \
+  && cp -a .medusa/server/. /server/ \
   && cp -a /app/node_modules /server/node_modules \
-  && (test -f /server/medusa-config.js || test -f /server/medusa-config.mjs) \
-  && (test -e /server/node_modules/.bin/medusa || test -d /server/node_modules/@medusajs/medusa)
+  && ls -la /server | head -40 \
+  && ls /server/node_modules/@medusajs | head -20 \
+  && test -f /server/medusa-config.js \
+  && test -d /server/node_modules/@medusajs/medusa
 
 FROM node:22-bookworm-slim AS runner
 ENV NODE_ENV=production

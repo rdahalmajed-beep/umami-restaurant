@@ -5,9 +5,10 @@ node_modules
 **/.git
 .medusa
 **/.medusa
-apps/storefront
 **/.env
 **/.env.*
+!**/.env.template
+!**/.env.example
 docs
 .turbo
 **/coverage
@@ -15,4 +16,8 @@ docs
 **/dist
 agent-transcripts
 *.md
-!apps/backend/package.json
+!package.json
+# Keep storefront package.json for pnpm workspace install;
+# exclude the rest of the storefront app from the Medusa image.
+apps/storefront/**
+!apps/storefront/package.json

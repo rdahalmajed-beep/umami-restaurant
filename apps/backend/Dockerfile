@@ -20,16 +20,16 @@ ARG MEDUSA_BACKEND_URL=https://umami-medusa.onrender.com
 ENV MEDUSA_BACKEND_URL=$MEDUSA_BACKEND_URL
 ENV NODE_ENV=production
 RUN pnpm run build || test -d .medusa/server
-WORKDIR /app
-RUN pnpm --filter @dtc/backend deploy --prod --legacy /deploy \
-  && mkdir -p /deploy/.medusa \
-  && cp -a /app/apps/backend/.medusa/. /deploy/.medusa/ \
-  && test -e /deploy/node_modules/.bin/medusa
+WORKDIR /app/apps/backend/.medusa/server
+RUN npm install --omit=dev --no-audit --no-fund \
+      --registry=https://registry.npmmirror.com \
+      --fetch-retries=5 --fetch-retry-mintimeout=20000 \
+  && test -f medusa-config.js -o -f medusa-config.ts -o -f medusa-config.mjs
 
 FROM node:22-bookworm-slim AS runner
 ENV NODE_ENV=production
 ENV NODE_OPTIONS=--max-old-space-size=384
-WORKDIR /app
-COPY --from=build /deploy /app
+WORKDIR /server
+COPY --from=build /app/apps/backend/.medusa/server /server
 EXPOSE 9000
-CMD ["sh", "-c", "./node_modules/.bin/medusa db:migrate && ./node_modules/.bin/medusa start"]
+CMD ["sh", "-c", "npm run predeploy && npm run start"]

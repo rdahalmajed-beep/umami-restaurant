@@ -1,6 +1,5 @@
-# Medusa backend for Render (API; Admin optional via DISABLE_MEDUSA_ADMIN).
+# Medusa backend for Render — self-contained via `pnpm deploy` (no registry at boot).
 # Build context = restaurant-platform repo root.
-# Copy PNPM_HOME + /app so runtime does not re-fetch from the registry (OOM/429).
 
 FROM node:22-bookworm-slim AS base
 ENV PNPM_HOME="/pnpm"
@@ -23,15 +22,17 @@ ARG MEDUSA_BACKEND_URL=https://umami-medusa.onrender.com
 ENV MEDUSA_BACKEND_URL=$MEDUSA_BACKEND_URL
 ENV NODE_ENV=production
 RUN pnpm run build || test -d .medusa/server
+# Portable prod tree with real node_modules (not pnpm store symlinks)
+WORKDIR /app
+RUN pnpm --filter @dtc/backend deploy --prod /deploy \
+  && mkdir -p /deploy/.medusa \
+  && cp -a /app/apps/backend/.medusa/. /deploy/.medusa/ \
+  && test -e /deploy/node_modules/.bin/medusa
 
-FROM base AS runner
+FROM node:22-bookworm-slim AS runner
 ENV NODE_ENV=production
 ENV NODE_OPTIONS=--max-old-space-size=384
-ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
 WORKDIR /app
-COPY --from=build /pnpm /pnpm
-COPY --from=build /app /app
-WORKDIR /app/apps/backend
+COPY --from=build /deploy /app
 EXPOSE 9000
-CMD ["sh", "-c", "pnpm exec medusa db:migrate && pnpm exec medusa start"]
+CMD ["sh", "-c", "./node_modules/.bin/medusa db:migrate && ./node_modules/.bin/medusa start"]

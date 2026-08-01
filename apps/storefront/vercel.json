@@ -1,5 +1,5 @@
 {
-  "installCommand": "npm install --legacy-peer-deps",
-  "buildCommand": "npm run build",
+  "installCommand": "corepack enable && corepack prepare pnpm@11.5.3 --activate && pnpm install",
+  "buildCommand": "pnpm run build",
   "framework": "nextjs"
 }

@@ -15,6 +15,7 @@ import {
 } from "@medusajs/framework/utils"
 import { RESTAURANT_MODULE } from "../modules/restaurant"
 import type RestaurantModuleService from "../modules/restaurant/service"
+import type { RestaurantOrderStatus } from "../modules/restaurant/types"
 import { kitchenEvents } from "../modules/restaurant/kitchen-events"
 
 export type TransitionRestaurantOrderInput = {

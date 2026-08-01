@@ -20,7 +20,10 @@ services:
       - key: MEDUSA_WORKER_MODE
         value: shared
       - key: DISABLE_MEDUSA_ADMIN
-        value: "false"
+        # Free tier (512Mi): keep true. After adding payment + standard plan, set false for /app Admin.
+        value: "true"
+      - key: NODE_OPTIONS
+        value: "--max-old-space-size=384"
       - key: MEDUSA_BACKEND_URL
         value: https://umami-medusa.onrender.com
       - key: STORE_CORS

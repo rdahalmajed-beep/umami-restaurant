@@ -1,6 +1,6 @@
-# Medusa backend image for Render (API + Admin).
+# Same as root Dockerfile — keep in sync (Blueprint may use this path).
+# Medusa backend for Render (API; Admin optional via DISABLE_MEDUSA_ADMIN).
 # Build context = restaurant-platform repo root.
-# Node 22+: pnpm 11 needs node:sqlite
 
 FROM node:22-bookworm-slim AS base
 ENV PNPM_HOME="/pnpm"
@@ -11,24 +11,28 @@ WORKDIR /app
 FROM base AS build
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc turbo.json ./
 COPY apps/backend/package.json ./apps/backend/
-COPY apps/storefront/package.json ./apps/storefront/
-RUN pnpm config set minimum-release-age 0 \
+RUN mkdir -p apps/storefront \
+  && printf '%s\n' '{"name":"@dtc/storefront","private":true,"version":"0.0.0"}' > apps/storefront/package.json
+RUN printf '\nnode-linker=hoisted\n' >> .npmrc \
+  && pnpm config set minimum-release-age 0 \
   && pnpm config set strict-dep-builds false \
-  && pnpm install --frozen-lockfile --fetch-retries=5 --fetch-retry-mintimeout=20000 \
-  && pnpm rebuild -r
+  && pnpm install --frozen-lockfile --filter @dtc/backend... \
+      --fetch-retries=5 --fetch-retry-mintimeout=20000 \
+  && pnpm rebuild --filter @dtc/backend...
 COPY apps/backend ./apps/backend
 WORKDIR /app/apps/backend
-ARG MEDUSA_BACKEND_URL
+ARG MEDUSA_BACKEND_URL=https://umami-medusa.onrender.com
 ENV MEDUSA_BACKEND_URL=$MEDUSA_BACKEND_URL
 ENV NODE_ENV=production
-# Emit server even if some TS overload mismatches remain
 RUN pnpm run build || test -d .medusa/server
 
-FROM base AS runner
+FROM node:22-bookworm-slim AS runner
 ENV NODE_ENV=production
+ENV NODE_OPTIONS=--max-old-space-size=384
 WORKDIR /app
-COPY --from=build /app /app
+COPY --from=build /app/package.json /app/pnpm-lock.yaml /app/pnpm-workspace.yaml /app/.npmrc ./
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/apps/backend ./apps/backend
 WORKDIR /app/apps/backend
 EXPOSE 9000
-# Use monorepo node_modules (avoid a second registry install that hits npm 429)
-CMD ["sh", "-c", "pnpm exec medusa db:migrate && pnpm exec medusa start"]
+CMD ["sh", "-c", "/app/node_modules/.bin/medusa db:migrate && /app/node_modules/.bin/medusa start"]

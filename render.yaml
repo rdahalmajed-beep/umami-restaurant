@@ -14,10 +14,6 @@ services:
     dockerContext: .
     healthCheckPath: /health
     autoDeployTrigger: commit
-    dockerBuildArgs:
-      # Override after first live URL is known, then clear build cache + redeploy
-      - key: MEDUSA_BACKEND_URL
-        value: https://umami-medusa.onrender.com
     envVars:
       - key: NODE_ENV
         value: production
@@ -66,7 +62,7 @@ services:
 
 databases:
   - name: umami-postgres
-    plan: basic_256mb
+    plan: basic-256mb
     region: frankfurt
     postgresMajorVersion: "16"
     databaseName: umami

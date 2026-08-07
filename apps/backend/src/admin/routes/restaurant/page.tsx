@@ -13,6 +13,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import type { ReactNode } from "react"
+import { formatRestaurantMoney } from "../../lib/format-money"
 
 type Dashboard = {
   counts: {
@@ -41,19 +42,6 @@ type Dashboard = {
     revenue: number
     aov: number
     currency_code: string
-  }
-}
-
-const formatMoney = (amount: number, currency: string) => {
-  try {
-    return new Intl.NumberFormat(undefined, {
-      style: "currency",
-      currency: currency.toUpperCase(),
-      minimumFractionDigits: 3,
-      maximumFractionDigits: 3,
-    }).format(amount)
-  } catch {
-    return `${amount.toFixed(3)} ${currency}`
   }
 }
 
@@ -239,8 +227,8 @@ const RestaurantHubPage = () => {
           <Text className="text-sm text-ui-fg-subtle">
             {t("restaurant.hub.todayStats", {
               orders: data.today.orders,
-              revenue: formatMoney(data.today.revenue, data.today.currency_code),
-              aov: formatMoney(data.today.aov, data.today.currency_code),
+              revenue: formatRestaurantMoney(data.today.revenue, data.today.currency_code),
+              aov: formatRestaurantMoney(data.today.aov, data.today.currency_code),
             })}
           </Text>
         )}

@@ -10,6 +10,7 @@ import { useQuery } from "@tanstack/react-query"
 import { useState } from "react"
 import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
+import { formatRestaurantMoney } from "../../../../lib/format-money"
 
 type HistoryOrder = {
   id: string
@@ -21,20 +22,6 @@ type HistoryOrder = {
   order_type?: string | null
   last_transition_at?: string | null
   created_at?: string | null
-}
-
-const formatMoney = (amount: number | null | undefined, currency: string) => {
-  if (amount == null) return "—"
-  try {
-    return new Intl.NumberFormat(undefined, {
-      style: "currency",
-      currency: currency.toUpperCase(),
-      minimumFractionDigits: 3,
-      maximumFractionDigits: 3,
-    }).format(amount)
-  } catch {
-    return `${amount.toFixed(3)} ${currency}`
-  }
 }
 
 const KitchenHistoryPage = () => {
@@ -120,7 +107,7 @@ const KitchenHistoryPage = () => {
               </div>
               <div className="flex items-center gap-3 shrink-0">
                 <Text className="font-semibold">
-                  {formatMoney(o.total, o.currency_code)}
+                  {formatRestaurantMoney(o.total, o.currency_code)}
                 </Text>
                 <Button asChild size="small" variant="secondary">
                   <Link to={`/orders/${o.order_id}`}>

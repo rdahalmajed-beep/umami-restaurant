@@ -17,11 +17,12 @@ AUTH_CORS=https://umami-medusa.onrender.com,https://YOUR_APP.vercel.app,http://l
 MEDUSA_BACKEND_URL=https://umami-medusa.onrender.com
 ```
 
-Seed the real Umami menu (Render Shell):
+Seed the real Umami menu (Render Shell on `/server`):
 
 ```bash
-npx medusa exec ./src/scripts/seed-restaurant-commerce.ts
-npx medusa exec ./src/scripts/seed-umami-menu.ts
+cd /server
+./node_modules/.bin/medusa exec ./src/scripts/seed-restaurant-commerce.ts
+./node_modules/.bin/medusa exec ./src/scripts/seed-umami-menu.ts
 ```
 
 Copy the publishable API key from Admin → Settings → Publishable API Keys (or from seed logs).
@@ -51,7 +52,7 @@ Use a tunnel to your local Medusa (`cloudflared` / `ngrok`) as `NEXT_PUBLIC_MEDU
 
 ## 4. What is fast today
 
-Home + `/store` render the **Umami catalog** (real BHD prices) with no Medusa waterfall — mobile-first UI. Checkout / cart still call Medusa when the backend URL + publishable key are set.
+Home + `/store` load the **Medusa-backed menu** (`MenuTemplate`: restaurant menu projection, else Medusa categories/products). Cart/checkout use Store API only — no hardcoded catalog.
 
 ## 5. After deploy checklist
 

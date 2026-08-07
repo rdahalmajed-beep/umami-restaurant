@@ -3,11 +3,21 @@ import { createHmac, timingSafeEqual } from "crypto"
 const TOKEN_PREFIX = "roa_"
 
 function secret(): string {
-  return (
+  const value =
+    process.env.RESTAURANT_GUEST_STATUS_SECRET ||
     process.env.JWT_SECRET ||
-    process.env.COOKIE_SECRET ||
-    "dev-insecure-restaurant-order-access"
-  )
+    process.env.COOKIE_SECRET
+
+  if (!value) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "RESTAURANT_GUEST_STATUS_SECRET (or JWT_SECRET) must be set in production"
+      )
+    }
+    return "dev-insecure-restaurant-order-access"
+  }
+
+  return value
 }
 
 export function createGuestOrderAccessToken(orderId: string): string {
@@ -22,6 +32,9 @@ export function verifyGuestOrderAccessToken(
   token: string | null | undefined
 ): boolean {
   if (!token || typeof token !== "string") {
+    return false
+  }
+  if (!token.startsWith(TOKEN_PREFIX)) {
     return false
   }
   const expected = createGuestOrderAccessToken(orderId)

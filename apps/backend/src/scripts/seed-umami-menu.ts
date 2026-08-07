@@ -466,5 +466,113 @@ export default async function seedUmamiMenu({
     logger.warn(`Brand content skip: ${String(e)}`)
   }
 
+  // Published restaurant menu projection (MENU SoT for storefront)
+  try {
+    const existing = await restaurant.listMenus(
+      {},
+      { take: 20, relations: ["sections", "sections.products"] }
+    )
+    let menu = (existing || []).find(
+      (m: { title?: string; status?: string }) =>
+        m.title === "قائمة أمامي" || m.title === "Umami Menu"
+    ) as
+      | {
+          id: string
+          status?: string
+          sections?: {
+            id: string
+            title?: string
+            products?: { product_id: string }[]
+          }[]
+        }
+      | undefined
+
+    if (!menu) {
+      const [created] = await restaurant.createMenus([
+        {
+          title: "قائمة أمامي",
+          subtitle: "Umami Manama",
+          status: "published",
+          published_at: new Date(),
+          applies_delivery: true,
+          applies_pickup: true,
+          sort_order: 0,
+        },
+      ])
+      menu = created
+      logger.info(`Created restaurant menu ${created.id}`)
+    } else if (menu.status !== "published") {
+      await restaurant.updateMenus({
+        id: menu.id,
+        status: "published",
+        published_at: new Date(),
+      })
+      logger.info(`Published restaurant menu ${menu.id}`)
+    }
+
+    const sectionDefs: {
+      title: string
+      handles: string[]
+    }[] = [
+      {
+        title: "الأطباق الرئيسية",
+        handles: PRODUCTS.filter((p) => p.categoryHandle === "mains").map(
+          (p) => p.handle
+        ),
+      },
+      {
+        title: "الأطباق الجانبية",
+        handles: PRODUCTS.filter((p) => p.categoryHandle === "sides").map(
+          (p) => p.handle
+        ),
+      },
+      {
+        title: "المشروبات",
+        handles: PRODUCTS.filter((p) => p.categoryHandle === "drinks").map(
+          (p) => p.handle
+        ),
+      },
+    ]
+
+    const sections = menu.sections || []
+    for (let i = 0; i < sectionDefs.length; i++) {
+      const def = sectionDefs[i]
+      let section = sections.find((s) => s.title === def.title)
+      if (!section) {
+        const [createdSection] = await restaurant.createMenuSections([
+          {
+            title: def.title,
+            sort_order: i,
+            is_active: true,
+            menu_id: menu.id,
+          },
+        ])
+        section = createdSection
+        logger.info(`Created menu section ${def.title}`)
+      }
+
+      const existingProductIds = new Set(
+        (section.products || []).map((p) => p.product_id)
+      )
+      let sort = existingProductIds.size
+      for (const handle of def.handles) {
+        const productId = byHandle.get(handle)
+        if (!productId || existingProductIds.has(productId)) continue
+        await restaurant.createMenuProducts([
+          {
+            product_id: productId,
+            sort_order: sort++,
+            is_active: true,
+            section_id: section.id,
+          },
+        ])
+        existingProductIds.add(productId)
+      }
+    }
+    logger.info("Restaurant menu projection seeded (published)")
+  } catch (e) {
+    logger.warn(`Restaurant menu seed skip: ${String(e)}`)
+  }
+
   logger.info("=== Umami Manama menu seed complete ===")
 }

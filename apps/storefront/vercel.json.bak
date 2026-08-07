@@ -1,0 +1,5 @@
+{
+  "installCommand": "npm install --legacy-peer-deps --no-audit --no-fund --registry=https://registry.npmmirror.com --fetch-retries=5 --fetch-retry-mintimeout=20000",
+  "buildCommand": "npm run build",
+  "framework": "nextjs"
+}

@@ -4,7 +4,7 @@ const requiredEnvs = [
   {
     key: "NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY",
     description:
-      "Admin → Settings → Publishable API Keys. For Vercel preview without backend yet, set pk_placeholder (menu still works from local catalog).",
+      "Admin → Settings → Publishable API Keys (pk_...). Required for Store API; no hardcoded catalog fallback.",
   },
 ]
 
@@ -14,19 +14,20 @@ function checkEnvVariables() {
   })
 
   if (missingEnvs.length > 0) {
-    // Allow CI / first Vercel deploy to build with catalog-only mode
-    if (
-      process.env.VERCEL ||
-      process.env.CI ||
-      process.env.ALLOW_MISSING_MEDUSA_KEY === "true"
-    ) {
+    const isProdVercel = process.env.VERCEL_ENV === "production"
+    const allowPlaceholder =
+      !isProdVercel &&
+      (process.env.CI === "true" ||
+        process.env.ALLOW_MISSING_MEDUSA_KEY === "true" ||
+        process.env.VERCEL_ENV === "preview")
+
+    if (allowPlaceholder) {
       console.warn(
         c.yellow(
-          "\n⚠ Missing NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY — building with catalog-only mode.\n"
+          "\n⚠ Missing NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY — using pk_placeholder for non-production build only.\n"
         )
       )
-      process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY =
-        process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY || "pk_placeholder"
+      process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY = "pk_placeholder"
       return
     }
 

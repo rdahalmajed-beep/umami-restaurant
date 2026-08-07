@@ -62,8 +62,11 @@ function projectionToSections(
 
 export default async function MenuTemplate({
   countryCode,
+  compactHeader = false,
 }: {
   countryCode: string
+  /** When true (home), skip the large page title block. */
+  compactHeader?: boolean
 }) {
   const region = await getRegion(countryCode)
   if (!region) return null
@@ -118,31 +121,8 @@ export default async function MenuTemplate({
     }
   }
 
-  // STORE-CONTRACT-001: production must not silently fall back to all Medusa products.
-  const allowCatalogFallback =
-    process.env.NODE_ENV !== "production" ||
-    process.env.RESTAURANT_ALLOW_CATALOG_FALLBACK === "true"
-
-  if (!usedProjection && !allowCatalogFallback) {
-    return (
-      <div
-        className="umami-atmosphere min-h-[calc(100vh-64px)]"
-        data-testid="menu-page"
-      >
-        <div className="content-container pt-8 pb-16">
-          <h1 className="font-display text-4xl text-umami-ink mb-2">Menu</h1>
-          <p
-            className="text-sm text-umami-terracotta"
-            data-testid="menu-setup-required"
-          >
-            Menu is not published yet. Publish a restaurant menu in Admin before
-            customers can order.
-          </p>
-        </div>
-      </div>
-    )
-  }
-
+  // No published restaurant menu → Medusa product categories (still Medusa SoT).
+  // Never use a hardcoded storefront catalog.
   if (!usedProjection) {
     const [categories, productResult] = await Promise.all([
       listCategories({ limit: 50 }),
@@ -208,21 +188,51 @@ export default async function MenuTemplate({
     }
   }
 
+  if (!finalSections.length) {
+    return (
+      <div
+        className="umami-atmosphere min-h-[calc(100vh-64px)]"
+        data-testid="menu-page"
+      >
+        <div className="content-container pt-8 pb-16">
+          <h1 className="font-display text-4xl text-umami-ink mb-2">Menu</h1>
+          <p
+            className="text-sm text-umami-terracotta"
+            data-testid="menu-setup-required"
+          >
+            No sellable products yet. Run commerce + Umami menu seeds, or publish
+            a restaurant menu in Admin.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div
       className="umami-atmosphere min-h-[calc(100vh-64px)]"
       data-testid="menu-page"
     >
-      <div className="content-container pt-8 pb-16">
-        <h1
-          className="font-display text-4xl text-umami-ink mb-2"
-          data-testid="store-page-title"
-        >
-          Menu
-        </h1>
-        <p className="text-sm text-umami-ink/60 mb-2 max-w-lg">
-          Browse by category, customize your plate, and add it to your order.
-        </p>
+      <div
+        className={
+          compactHeader
+            ? "content-container pb-16 pt-2"
+            : "content-container pt-8 pb-16"
+        }
+      >
+        {!compactHeader ? (
+          <>
+            <h1
+              className="font-display text-4xl text-umami-ink mb-2"
+              data-testid="store-page-title"
+            >
+              Menu
+            </h1>
+            <p className="text-sm text-umami-ink/60 mb-2 max-w-lg">
+              Browse by category, customize your plate, and add it to your order.
+            </p>
+          </>
+        ) : null}
         {operationalHint ? (
           <p
             className="text-sm text-umami-terracotta mb-2"

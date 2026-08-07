@@ -1,5 +1,6 @@
 import { HttpTypes } from "@medusajs/types"
 import { Text } from "@modules/common/components/ui"
+import { formatBhd } from "@lib/util/money"
 import type { LineItemModifierSnapshot } from "types/restaurant"
 
 type LineItemOptionsProps = {
@@ -36,7 +37,7 @@ const LineItemOptions = ({
         >
           {m.group_name}: {m.option_name}
           {Number(m.price_adjustment) > 0
-            ? ` (+${Number(m.price_adjustment).toFixed(3)})`
+            ? ` (+${formatBhd(Number(m.price_adjustment))})`
             : ""}
         </Text>
       ))}

@@ -8,7 +8,7 @@ RUN corepack enable && corepack prepare pnpm@11.5.3 --activate
 WORKDIR /app
 
 FROM base AS build
-ARG CACHE_BUST=20260801b
+ARG CACHE_BUST=20260807a
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc turbo.json ./
 COPY apps/backend/package.json ./apps/backend/
 COPY apps/storefront/package.json ./apps/storefront/
@@ -22,9 +22,10 @@ WORKDIR /app/apps/backend
 ARG MEDUSA_BACKEND_URL=https://umami-medusa.onrender.com
 ENV MEDUSA_BACKEND_URL=$MEDUSA_BACKEND_URL
 ENV NODE_ENV=production
-RUN pnpm run build || test -f .medusa/server/medusa-config.js
+# Require compiled server output (fail deploy if build produces nothing)
+RUN pnpm run build; \
+    test -f .medusa/server/medusa-config.js
 WORKDIR /app/apps/backend/.medusa/server
-# Install prod deps from npmjs (not a mirror) into the compiled server tree
 RUN npm install --omit=dev --no-audit --no-fund \
       --registry=https://registry.npmjs.org/ \
       --fetch-retries=8 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000 \
@@ -38,5 +39,6 @@ ENV NODE_ENV=production
 ENV NODE_OPTIONS=--max-old-space-size=384
 WORKDIR /server
 COPY --from=build /app/apps/backend/.medusa/server /server
+COPY --from=build /app/apps/backend/src/scripts /server/src/scripts
 EXPOSE 9000
 CMD ["sh", "-c", "./node_modules/.bin/medusa db:migrate && ./node_modules/.bin/medusa start"]

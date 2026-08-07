@@ -6,6 +6,7 @@ import Divider from "@modules/common/components/divider"
 import OrderTypeSelector from "../components/order-type-selector"
 import { HttpTypes } from "@medusajs/types"
 import type { StoreBranch, StoreFulfillmentPolicy } from "types/restaurant"
+import { formatBhd } from "@lib/util/money"
 
 const CartTemplate = ({
   cart,
@@ -55,7 +56,7 @@ const CartTemplate = ({
                       ? `Minimum order: ${minOrder} · ETA ~${policy.estimated_minutes} min`
                       : `ETA ~${policy.estimated_minutes} min`}
                   {belowMin
-                    ? ` — add ${(minOrder - subtotal).toFixed(3)} more to checkout.`
+                    ? ` — add ${formatBhd(minOrder - subtotal)} more to checkout.`
                     : ""}
                 </p>
               ) : null}

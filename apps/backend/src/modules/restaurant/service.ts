@@ -442,13 +442,17 @@ class RestaurantModuleService extends MedusaService({
       {
         timezone: "Asia/Bahrain",
         default_locale: "ar",
-        supported_locales_json: ["ar", "en"],
+        // JSON column stores locale list; Medusa types this as Record
+        supported_locales_json: ["ar", "en"] as unknown as Record<
+          string,
+          unknown
+        >,
         default_prep_minutes: 20,
         max_item_quantity: 20,
         ordering_enabled: true,
         schema_version: 1,
       },
-    ])
+    ] as never)
     return row
   }
 
@@ -577,13 +581,13 @@ class RestaurantModuleService extends MedusaService({
         action: input.action,
         resource_type: input.resource_type,
         resource_id: input.resource_id ?? null,
-        before_json: input.before ?? null,
-        after_json: input.after ?? null,
+        before_json: (input.before ?? null) as Record<string, unknown> | null,
+        after_json: (input.after ?? null) as Record<string, unknown> | null,
         reason: input.reason ?? null,
         correlation_id: input.correlation_id ?? null,
         ip: input.ip ?? null,
       },
-    ])
+    ] as never)
     return row
   }
 

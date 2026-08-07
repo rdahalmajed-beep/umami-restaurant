@@ -12,6 +12,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { Link } from "react-router-dom"
 import { useTranslation } from "react-i18next"
+import { formatRestaurantMoney } from "../../../lib/format-money"
 
 type KitchenOrder = {
   id: string
@@ -49,20 +50,6 @@ type Ticket = {
 }
 
 type TabKey = "all" | "received" | "accepted" | "preparing" | "ready"
-
-const formatMoney = (amount: number | null | undefined, currency: string) => {
-  if (amount == null) return "—"
-  try {
-    return new Intl.NumberFormat(undefined, {
-      style: "currency",
-      currency: currency.toUpperCase(),
-      minimumFractionDigits: 3,
-      maximumFractionDigits: 3,
-    }).format(amount)
-  } catch {
-    return `${amount.toFixed(3)} ${currency.toUpperCase()}`
-  }
-}
 
 const elapsedLabel = (iso?: string | null) => {
   if (!iso) return ""
@@ -410,7 +397,7 @@ const KitchenOrdersPage = () => {
                     )}
                   </div>
                   <Text className="font-semibold shrink-0">
-                    {formatMoney(order.total, order.currency_code)}
+                    {formatRestaurantMoney(order.total, order.currency_code)}
                   </Text>
                 </div>
 
